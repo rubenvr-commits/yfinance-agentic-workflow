@@ -1,11 +1,29 @@
 ---
 name: berkshire-valuation
-description: Valora un activo financiero basándose en los principios de inversión de Berkshire Hathaway (Warren Buffett y Charlie Munger). Usa esta skill cada vez que el usuario te pida valorar una acción, activo, o empresa, o te pida un análisis de inversión usando principios de Warren Buffett o Berkshire Hathaway. El usuario te proporcionará el nombre del activo y sus datos financieros (ej. desde yfinance).
+description: Valora un activo financiero basándose en los principios de inversión de Berkshire Hathaway (Warren Buffett y Charlie Munger). Lee automáticamente el informe yfinance desde evaluaciones/{ticker}/informe-yfinance.md y formula preguntas al oráculo de Berkshire Hathaway (NotebookLM) basándose en esos datos sin realizar modificaciones.
 ---
 
 # Berkshire Hathaway Valuation Skill
 
 Esta skill te permite actuar como un analista financiero experto en los principios de inversión de Berkshire Hathaway, utilizando un NotebookLM que contiene transcripciones de 27 conferencias anuales.
+
+## Activación de la Skill
+
+Usa esta skill cuando el usuario te pida:
+- Valorar una acción o activo usando principios de Warren Buffett o Berkshire Hathaway
+- Realizar un análisis de inversión basado en datos de yfinance
+- Evaluar si una empresa cumple con los criterios de inversión de Berkshire
+
+**Ejemplo de invocación:**
+```
+Analiza PCT.L (Polar Capital Technology Trust plc) usando los principios de Berkshire Hathaway
+```
+
+La skill automáticamente:
+1. Buscará el archivo `evaluaciones/PCT.L/informe-yfinance.md`
+2. Extraerá los datos financieros sin modificaciones
+3. Formulará preguntas a NotebookLM basadas en esos datos
+4. Generará un informe en `evaluaciones/PCT.L/informe-berkshire.md`
 
 ## Recursos Bundled
 
@@ -17,19 +35,22 @@ Esta skill incluye las siguientes herramientas:
 
 ## Instrucciones Principales
 
-1. **NO busques datos financieros por tu cuenta**. El usuario ya te proporcionará toda la información financiera relevante (como datos extraídos de `yfinance`) en su prompt. Tu única tarea de recuperación de información es consultar a Warren Buffett / Charlie Munger a través de la herramienta de NotebookLM.
-2. **Formula una buena pregunta para NotebookLM**. Basándote en la empresa y los datos financieros proporcionados por el usuario, formula una o más preguntas para el oráculo de Berkshire Hathaway. Por ejemplo: "¿Cómo vería Warren Buffett una empresa con esta ventaja competitiva, un ratio P/E de X, y este nivel de deuda?".
+1. **Lee el informe yfinance directamente**. El sistema buscará automáticamente el informe financiero en `evaluaciones/{ticker}/informe-yfinance.md`. Lee todo el contenido sin realizar ninguna modificación.
+2. **Pasa el informe completo a NotebookLM**. Incluye el contenido íntegro del archivo `informe-yfinance.md` directamente en la query que enviarás a NotebookLM. La query contendrá tanto el informe como una pregunta analítica sobre él, basada en los principios de inversión de Berkshire Hathaway.
 3. **Consulta el NotebookLM**. Para consultar el Notebook, DEBES usar el cliente de NotebookLM ejecutando el siguiente comando en la terminal:
    ```bash
-   python scripts/notebooklm_client.py ask --notebook-id 6904dc8b-742e-4192-82db-32e81e1f5e0f --question "TU_PREGUNTA_AQUI"
+   python scripts/notebooklm_client.py ask --notebook-id 6904dc8b-742e-4192-82db-32e81e1f5e0f --question "Informe para el análisis:
+
+  {informe-yfinance.md}
+
    ```
    **Requisitos previos:**
    - Instalar `notebooklm-py` y `playwright` en el entorno: `pip install notebooklm-py playwright`
    - Realizar autenticación con NotebookLM: `python -m notebooklm login --browser chromium`
    - Este proceso genera `~/.notebooklm/profiles/default/storage_state.json` con tu sesión autenticada
    
-   *Nota: Sustituye `TU_PREGUNTA_AQUI` por la pregunta o preguntas que hayas formulado. Si necesitas hacer múltiples preguntas para obtener diferentes perspectivas, ejecuta el comando varias veces o formula una pregunta detallada y compuesta.*
-4. **Sintetiza la respuesta**. Lee atentamente la salida del script (el campo `answer` devuelto en formato JSON). Combina los principios expuestos en la respuesta de NotebookLM con los datos financieros precisos que el usuario proporcionó.
+   *Nota: Sustituye `{informe-yfinance.md}` por el contenido completo del archivo del informe yfinance sin modificaciones.*
+4. **Almacena la respuesta**. Copia la respuesta completa de NotebookLM (el campo `answer` del JSON devuelto) y guárdala en el archivo de salida sin realizar modificaciones.
 
 ## Estructura de Salida (Output Format)
 
@@ -38,27 +59,13 @@ SIEMPRE debes estructurar tu respuesta final exactamente con el siguiente format
 **Ubicación del archivo:**
 ```
 evaluaciones/
-  └── {nombre-activo}/
+  └── {ticker-activo}/
         └── informe-berkshire.md
 ```
 
-*Ejemplo: Para Apple (AAPL), el archivo se guardará en `evaluaciones/apple-aapl/informe-berkshire.md`*
+*Ejemplo: Para Apple (AAPL), el archivo se guardará en `evaluaciones/aapl/informe-berkshire.md`*
 
 **Contenido del archivo:**
 
-### 1. Análisis Detallado
-Escribe un análisis cualitativo y cuantitativo detallado (3-5 párrafos) aplicando los principios extraídos de las conferencias de Berkshire Hathaway a los parámetros financieros proporcionados. Debes entrelazar los datos (por ejemplo, márgenes, crecimiento, deuda) con la filosofía de inversión (foso económico, círculo de competencia, margen de seguridad).
+La respuesta de notebooklm sin modificaciones.
 
-### 2. Tabla Resumen
-Proporciona una tabla resumen en Markdown con los puntos clave de la valoración:
-
-| Métrica / Principio | Evaluación (Berkshire Hathaway) |
-| :--- | :--- |
-| **Foso Económico (Moat)** | [Evaluación basada en los datos y los principios] |
-| **Salud Financiera** | [Evaluación de la deuda, retorno sobre capital, etc.] |
-| **Valoración (Precio/Atracción)**| [Evaluación basada en múltiplos y margen de seguridad] |
-| **Veredicto Final** | [Positivo / Neutral / Negativo] |
-
-## Restricciones
-- Nunca simules o inventes citas directas si no provienen de la respuesta de NotebookLM.
-- Si la respuesta del NotebookLM indica que no hay suficiente información sobre un tema específico, evalúa usando los principios más generales de Buffett sobre negocios de ese tipo.

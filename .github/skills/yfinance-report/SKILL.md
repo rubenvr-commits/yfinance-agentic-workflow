@@ -13,7 +13,7 @@ Generate professional financial reports for any stock ticker. This skill automat
 1. **Downloads financial data** from yfinance for the requested ticker
 2. **Extracts and processes** ~100+ financial metrics (prices, valuations, balance sheet, dividends, cash flows, options)
 3. **Handles missing data** gracefully (shows "N/A" for unavailable fields)
-4. **Fills the report template** (`plantilla.md`) with actual values
+4. **Fills the report template** (`references/plantilla.md`) with actual values
 5. **Saves the report** to `evaluaciones/{TICKER}/informe-yfinance.md`
 
 ## When to Use This Skill
