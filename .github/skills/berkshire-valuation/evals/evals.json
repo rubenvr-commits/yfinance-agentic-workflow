@@ -1,0 +1,17 @@
+{
+  "skill_name": "berkshire-valuation",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Valora Apple (AAPL). Tienen un margen de beneficio neto del 25%, un ROE del 150%, deuda a largo plazo manejable comparada con su flujo de caja libre de 100 mil millones, y un P/E de 28. ¿Qué opinaría Warren Buffett?",
+      "expected_output": "Análisis detallado de Apple basado en los principios de Berkshire Hathaway, seguido de una tabla resumen.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Haz un análisis de inversión para una empresa startup tecnológica genérica (TECH). Sus ingresos crecen al 50% anual, pero tienen márgenes netos negativos (-20%), sin flujo de caja libre positivo y queman efectivo. No reparte dividendos. Su P/S (Price to Sales) es de 15.",
+      "expected_output": "Análisis detallado criticando la falta de rentabilidad y foso económico claro bajo la mentalidad de Warren Buffett, seguido de una tabla resumen.",
+      "files": []
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:18
+    container_name: yfinance_postgres
+    env_file:
+      - .env
+    ports:
+      - '5432:5432'
+    volumes:
+      - ./postgres/18/docker:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}"']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
