@@ -2,3 +2,4 @@ postgres/18/
 .venv/
 .env
 
+evaluaciones/*

@@ -13,7 +13,7 @@ Generate professional financial reports for any stock ticker. This skill automat
 1. **Downloads financial data** from yfinance for the requested ticker
 2. **Extracts and processes** ~100+ financial metrics (prices, valuations, balance sheet, dividends, cash flows, options)
 3. **Handles missing data** gracefully (shows "N/A" for unavailable fields)
-4. **Fills the report template** (`plantilla.md`) with actual values
+4. **Fills the report template** (`references/plantilla.md`) with actual values
 5. **Saves the report** to `evaluaciones/{TICKER}/informe-yfinance.md`
 
 ## When to Use This Skill
@@ -32,7 +32,7 @@ Generate professional financial reports for any stock ticker. This skill automat
 - Focus area (e.g., "focus on dividends", "check valuation metrics")
 - Comparison with other tickers (run separately, then compare)
 
-The skill will automatically locate `plantilla.md` in the repository root and use it as the template.
+The skill will automatically locate `plantilla.md` in the `.github/skills/yfinance-report/` directory and use it as the template.
 
 ## Output
 
@@ -43,7 +43,7 @@ The skill will automatically locate `plantilla.md` in the repository root and us
 ## How It Works
 
 ### Step 1: Setup
-The skill uses a Python script that imports `yfinance` and reads `plantilla.md` from the repo root, then downloads ticker data.
+The skill uses a Python script that imports `yfinance` and reads `plantilla.md` from the `.github/skills/yfinance-report/` directory, then downloads ticker data.
 
 ### Step 2: Data Extraction & Processing
 For each template field (`{TICKER}`, `{CURRENT_PRICE}`, `{TRAILING_PE}`, etc.):

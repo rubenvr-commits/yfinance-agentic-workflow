@@ -279,9 +279,10 @@ def generate_report(ticker_symbol):
     data = build_data_dict(ticker_symbol, ticker, info)
     
     # Find and read template
-    template_path = Path("plantilla.md")
+    script_dir = Path(__file__).parent
+    template_path = script_dir.parent / "plantilla.md"
     if not template_path.exists():
-        print(f"Error: plantilla.md not found in current directory")
+        print(f"Error: plantilla.md not found in {template_path}")
         return False
     
     print(f"[*] Reading template from {template_path}")

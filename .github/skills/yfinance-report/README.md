@@ -28,6 +28,8 @@ pip install yfinance pandas
 ```bash
 .github/skills/yfinance-report/
 ├── SKILL.md
+├── README.md
+├── plantilla.md
 ├── scripts/
 │   └── generate_report.py
 └── evals/
@@ -86,7 +88,7 @@ yfinance-report/
 
 - **Language:** Python 3.7+
 - **Dependencies:** `yfinance`, `pandas` (pandas is optional)
-- **Template:** Uses `plantilla.md` from repo root
+- **Template:** Uses `plantilla.md` from `.github/skills/yfinance-report/`
 - **Output:** Markdown files in UTF-8 encoding
 - **Execution time:** 10-30 seconds per report
 
@@ -176,7 +178,8 @@ pip install yfinance pandas
 ## Troubleshooting
 
 ### "plantilla.md not found"
-Ensure `plantilla.md` exists in the repository root.
+
+Ensure `plantilla.md` exists in `.github/skills/yfinance-report/`.
 
 ### "Could not fetch data for ticker X"
 Verify the ticker symbol is correct on Yahoo Finance.
