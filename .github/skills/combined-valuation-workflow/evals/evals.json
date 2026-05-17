@@ -1,0 +1,29 @@
+{
+  "skill_name": "combined-valuation-workflow",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Generate a financial report for Apple (AAPL) using Berkshire Hathaway investment principles and tell me if it's a good investment.",
+      "expected_output": "Two markdown files should be generated: evaluaciones/AAPL/informe-yfinance.md (technical report with ~100+ financial metrics) and evaluaciones/AAPL/informe-berkshire.md (Berkshire analysis with valuation and investment recommendation). The skill should be triggered automatically due to 'informe' and ticker mention.",
+      "files": []
+    },
+    {
+      "id": 1,
+      "prompt": "Analiza Microsoft (MSFT). Quiero un análisis completo con valoración técnica y evaluación de inversión según Berkshire.",
+      "expected_output": "Both reports generated for MSFT. The workflow should extract MSFT from the parenthetical mention, generate yfinance technical report, then create Berkshire valuation analysis. Files: evaluaciones/MSFT/informe-yfinance.md and evaluaciones/MSFT/informe-berkshire.md",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "ticker: GOOGL - dame un informe y análisis de inversión basado en principios de Berkshire Hathaway.",
+      "expected_output": "Explicit ticker format. Workflow extracts GOOGL from 'ticker: GOOGL', generates both reports. Files: evaluaciones/GOOGL/informe-yfinance.md and evaluaciones/GOOGL/informe-berkshire.md",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Should I buy Tesla? Run a complete analysis including technical financials and value investing assessment.",
+      "expected_output": "Natural mention without explicit ticker format. Skill should extract TSLA from context ('Tesla'), generate both reports automatically. Files: evaluaciones/TSLA/informe-yfinance.md and evaluaciones/TSLA/informe-berkshire.md",
+      "files": []
+    }
+  ]
+}

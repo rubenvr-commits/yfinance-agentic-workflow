@@ -280,9 +280,16 @@ def generate_report(ticker_symbol):
     
     # Find and read template
     script_dir = Path(__file__).parent
+    # Try multiple locations for plantilla.md
     template_path = script_dir.parent / "plantilla.md"
     if not template_path.exists():
-        print(f"Error: plantilla.md not found in {template_path}")
+        template_path = script_dir.parent / "references" / "plantilla.md"
+    if not template_path.exists():
+        # Try at workspace root
+        workspace_root = script_dir.parent.parent.parent.parent
+        template_path = workspace_root / "plantilla.md"
+    if not template_path.exists():
+        print(f"Error: plantilla.md not found in expected locations")
         return False
     
     print(f"[*] Reading template from {template_path}")
