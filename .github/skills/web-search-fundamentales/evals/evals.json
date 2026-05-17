@@ -1,0 +1,11 @@
+{
+  "skill_name": "web-search-fundamentales",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Transforma evaluaciones/REP.MC/raw-search/web-search.json en un informe markdown de fundamentos, excluyendo cualquier error de API.",
+      "expected_output": "Un archivo evaluaciones/REP.MC/informe-fundamentales.md que incluye solo resultados válidos de búsqueda y omite los mensajes de error de API.",
+      "files": []
+    }
+  ]
+}
