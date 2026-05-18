@@ -13,7 +13,7 @@ The **yfinance-report** skill automates the process of gathering comprehensive f
 - **Handles missing data** gracefully — shows "N/A" instead of breaking
 - **Generates professional reports** in markdown format
 - **Supports multiple tickers** in a single run
-- **Organizes output** in `evaluaciones/{TICKER}/informe-yfinance.md`
+- **Organizes output** in `evaluaciones/{TICKER}/informe-tecnico.md`
 
 ## Quick Start
 
@@ -49,9 +49,9 @@ python .github/skills/yfinance-report/scripts/generate_report.py AAPL MSFT GOOGL
 ```
 
 This creates professional reports in:
-- `evaluaciones/AAPL/informe-yfinance.md`
-- `evaluaciones/MSFT/informe-yfinance.md`
-- `evaluaciones/GOOGL/informe-yfinance.md`
+- `evaluaciones/AAPL/informe-tecnico.md`
+- `evaluaciones/MSFT/informe-tecnico.md`
+- `evaluaciones/GOOGL/informe-tecnico.md`
 
 ## Report Contents
 
@@ -111,22 +111,22 @@ When yfinance doesn't provide a value:
 ```bash
 python .github/skills/yfinance-report/scripts/generate_report.py AAPL
 ```
-**Output:** `evaluaciones/AAPL/informe-yfinance.md`
+**Output:** `evaluaciones/AAPL/informe-tecnico.md`
 
 ### Multiple Tickers (Batch)
 ```bash
 python .github/skills/yfinance-report/scripts/generate_report.py MSFT GOOGL TSLA
 ```
 **Output:**
-- `evaluaciones/MSFT/informe-yfinance.md`
-- `evaluaciones/GOOGL/informe-yfinance.md`
-- `evaluaciones/TSLA/informe-yfinance.md`
+- `evaluaciones/MSFT/informe-tecnico.md`
+- `evaluaciones/GOOGL/informe-tecnico.md`
+- `evaluaciones/TSLA/informe-tecnico.md`
 
 ### Complex Tickers
 ```bash
 python .github/skills/yfinance-report/scripts/generate_report.py BRK.B
 ```
-**Output:** `evaluaciones/BRK.B/informe-yfinance.md`
+**Output:** `evaluaciones/BRK.B/informe-tecnico.md`
 
 ## Supported Tickers
 

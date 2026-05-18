@@ -409,7 +409,7 @@ def generate_report(ticker_symbol):
     output_dir = Path("evaluaciones") / ticker_symbol
     output_dir.mkdir(parents=True, exist_ok=True)
     
-    output_file = output_dir / "informe-yfinance.md"
+    output_file = output_dir / "informe-tecnico.md"
     with open(output_file, "w", encoding="utf-8") as f:
         f.write(filled)
     

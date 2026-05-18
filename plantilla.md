@@ -52,7 +52,7 @@ La skill `yfinance-report` lee esta plantilla y la completa automáticamente con
 python .github/skills/yfinance-report/scripts/generate_report.py AAPL
 ```
 
-Resultado: `evaluaciones/AAPL/informe-yfinance.md`
+Resultado: `evaluaciones/AAPL/informe-tecnico.md`
 
 ---
 

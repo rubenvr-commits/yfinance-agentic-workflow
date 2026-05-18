@@ -1,6 +1,6 @@
 ---
 name: berkshire-valuation
-description: Valora un activo financiero basándose en los principios de inversión de Berkshire Hathaway (Warren Buffett y Charlie Munger). Lee automáticamente el informe yfinance desde evaluaciones/{ticker}/informe-yfinance.md y formula preguntas al oráculo de Berkshire Hathaway (NotebookLM) basándose en esos datos sin realizar modificaciones.
+description: Valora un activo financiero basándose en los principios de inversión de Berkshire Hathaway (Warren Buffett y Charlie Munger). Lee automáticamente el informe técnico desde evaluaciones/{ticker}/informe-tecnico.md y formula preguntas al oráculo de Berkshire Hathaway (NotebookLM) basándose en esos datos sin realizar modificaciones.
 ---
 
 # Berkshire Hathaway Valuation Skill
@@ -20,7 +20,7 @@ Analiza PCT.L (Polar Capital Technology Trust plc) usando los principios de Berk
 ```
 
 La skill automáticamente:
-1. Buscará el archivo `evaluaciones/PCT.L/informe-yfinance.md`
+1. Buscará el archivo `evaluaciones/PCT.L/informe-tecnico.md`
 2. Extraerá los datos financieros sin modificaciones
 3. Formulará preguntas a NotebookLM basadas en esos datos
 4. Generará un informe en `evaluaciones/PCT.L/informe-berkshire.md`
@@ -35,13 +35,13 @@ Esta skill incluye las siguientes herramientas:
 
 ## Instrucciones Principales
 
-1. **Lee el informe yfinance directamente**. El sistema buscará automáticamente el informe financiero en `evaluaciones/{ticker}/informe-yfinance.md`. Lee todo el contenido sin realizar ninguna modificación.
-2. **Pasa el informe completo a NotebookLM**. Incluye el contenido íntegro del archivo `informe-yfinance.md` directamente en la query que enviarás a NotebookLM. La query contendrá tanto el informe como una pregunta analítica sobre él, basada en los principios de inversión de Berkshire Hathaway.
+1. **Lee el informe técnico directamente**. El sistema buscará automáticamente el informe financiero en `evaluaciones/{ticker}/informe-tecnico.md`. Lee todo el contenido sin realizar ninguna modificación.
+2. **Pasa el informe completo a NotebookLM**. Incluye el contenido íntegro del archivo `informe-tecnico.md` directamente en la query que enviarás a NotebookLM. La query contendrá tanto el informe como una pregunta analítica sobre él, basada en los principios de inversión de Berkshire Hathaway.
 3. **Consulta el NotebookLM**. Para consultar el Notebook, DEBES usar el cliente de NotebookLM ejecutando el siguiente comando en la terminal:
    ```bash
    python scripts/notebooklm_client.py ask --notebook-id 6904dc8b-742e-4192-82db-32e81e1f5e0f --question "Informe para el análisis:
 
-  {informe-yfinance.md}
+  {informe-tecnico.md}
 
    ```
    **Requisitos previos:**
@@ -49,7 +49,7 @@ Esta skill incluye las siguientes herramientas:
    - Realizar autenticación con NotebookLM: `python -m notebooklm login --browser chromium`
    - Este proceso genera `~/.notebooklm/profiles/default/storage_state.json` con tu sesión autenticada
    
-   *Nota: Sustituye `{informe-yfinance.md}` por el contenido completo del archivo del informe yfinance sin modificaciones.*
+   *Nota: Sustituye `{informe-tecnico.md}` por el contenido completo del archivo del informe técnico sin modificaciones.*
 4. **Almacena la respuesta**. Copia la respuesta completa de NotebookLM (el campo `answer` del JSON devuelto) y guárdala en el archivo de salida sin realizar modificaciones.
 
 ## Estructura de Salida (Output Format)

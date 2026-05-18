@@ -91,7 +91,7 @@ def call_yfinance_report(ticker: str) -> Tuple[bool, str]:
     """
     workspace_root = get_workspace_root()
     script_path = workspace_root / '.github' / 'skills' / 'yfinance-report' / 'scripts' / 'generate_report.py'
-    output_path = workspace_root / 'evaluaciones' / ticker / 'informe-yfinance.md'
+    output_path = workspace_root / 'evaluaciones' / ticker / 'informe-tecnico.md'
     
     if not script_path.exists():
         return False, f"Script no encontrado: {script_path}"
