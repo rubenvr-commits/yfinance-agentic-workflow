@@ -1,22 +1,27 @@
 ---
 name: combined-valuation-workflow
-description: "Generates a complete investment analysis by combining yfinance technical reports with Berkshire Hathaway valuation principles. Triggers on mentions of 'informe', 'ticker', 'análisis', 'valoración', or 'valuation' — use this whenever the user mentions a stock ticker and wants financial analysis, investment research, or valuation assessment. Automatically orchestrates both the technical financial report and the Berkshire-based value analysis in sequence, generating two comprehensive markdown reports saved to evaluaciones/{ticker}/. This is your go-to skill when analyzing stocks through the lens of value investing principles."
+description: "Generates a complete investment analysis by combining yfinance technical reports, web-based fundamentals research, and Berkshire Hathaway valuation principles. Executes yfinance-report and tavily-research IN PARALLEL, then applies Berkshire analysis. Triggers on mentions of 'informe', 'ticker', 'análisis', 'valoración', or 'valuation' — use this whenever the user mentions a stock ticker and wants financial analysis, investment research, or valuation assessment. Automatically orchestrates all phases, generating four comprehensive markdown reports saved to evaluaciones/{ticker}/. This is your go-to skill when analyzing stocks through the lens of value investing principles with complete contextual research."
 compatibility: "Python 3.7+, yfinance, notebooklm-py, pandas (optional)"
 ---
 
 # Combined Valuation Workflow
 
-Automate the complete analysis of any stock ticker using a two-phase approach: generate a comprehensive technical financial report, then apply Berkshire Hathaway investment principles to assess valuation and investment merit.
+Automate the complete analysis of any stock ticker using a three-phase parallel approach: generate comprehensive technical financial data, conduct parallel web-based fundamental research, then apply Berkshire Hathaway investment principles to assess full valuation and investment merit.
 
 ## What This Skill Does
 
-1. **Phase 1 – Technical Analysis**: Executes the yfinance-report skill to pull real-time financial data from Yahoo Finance and generate a structured technical report covering ~100+ financial metrics (pricing, valuations, balance sheet, dividends, cash flows, options, technical indicators, corporate events, executive info, SWOT).
+1. **Phase 1 – Parallel Data Collection**:
+   - **Stream A (Technical)**: Executes yfinance-report skill to pull real-time financial data from Yahoo Finance and generate structured technical report covering ~100+ financial metrics (pricing, valuations, balance sheet, dividends, cash flows, options, technical indicators, corporate events, executive info, SWOT).
+   - **Stream B (Fundamentals)**: Executes tavily-research mini-workflow to conduct web-based research across 4 strategic dimensions (long-term vision, corporate values, competitive advantages, critical management decisions) and automatically generates formatted fundamentals report.
+   - Both streams execute **in parallel** for faster analysis.
 
-2. **Phase 2 – Value Assessment**: Automatically feeds the technical report to a NotebookLM trained on 27 years of Berkshire Hathaway shareholder letters, which analyzes the company through the lens of Warren Buffett and Charlie Munger's investment philosophy — assessing competitive moats, management quality, margin of safety, and growth sustainability.
+2. **Phase 2 – Value Assessment**: Automatically feeds both technical and fundamentals reports to a NotebookLM trained on 27 years of Berkshire Hathaway shareholder letters, which analyzes the company through the lens of Warren Buffett and Charlie Munger's investment philosophy — assessing competitive moats, management quality, margin of safety, and growth sustainability with complete contextual information.
 
-3. **Output**: Two markdown reports saved to `evaluaciones/{TICKER}/`:
-   - `informe-yfinance.md` — Technical financial baseline
-   - `informe-berkshire.md` — Investment thesis and valuation recommendation
+3. **Output**: Four markdown reports saved to `evaluaciones/{TICKER}/`:
+   - `informe-yfinance.md` — Technical financial baseline (~100+ metrics)
+   - `raw-search/web-search.json` — Structured web research data (4 dimensions)
+   - `informe-fundamentales.md` — Formatted fundamentals from web research
+   - `informe-berkshire.md` — Investment thesis and valuation recommendation (using both technical and fundamentals data)
 
 ## When to Use This Skill
 
@@ -24,8 +29,8 @@ Automate the complete analysis of any stock ticker using a two-phase approach: g
 - User asks to "analyze" a stock (e.g., "analyze AAPL", "research Tesla")
 - User mentions a ticker and wants financial or investment analysis (e.g., "what about MSFT?", "should I buy GOOGL?")
 - User says "generate a report" or "create an informe" for a company
-- User wants to evaluate a company using value investing principles
-- User asks for "investment research", "due diligence", "valuation", or "worth of a stock"
+- User wants to evaluate a company using value investing principles with complete research
+- User asks for "investment research", "due diligence", "valuation", "fundamental analysis", or "worth of a stock"
 - User mentions "ticker" or "informe" in any context related to analyzing a company
 - User provides ticker in any format (explicit like "ticker: AAPL", natural like "check out Apple (AAPL)", or just "AAPL")
 
@@ -41,23 +46,37 @@ The skill intelligently extracts the stock ticker symbol from user input:
 - **Natural mention**: `analyze MSFT`, `research GOOGL`, `what about FB`
 - **Case-insensitive**: `aapl` → `AAPL`
 
-### Step 2: Call yfinance-report
-Executes the yfinance-report skill script which:
-- Downloads financial data from Yahoo Finance using the `yfinance` library
-- Extracts 100+ financial metrics (current price, P/E ratio, dividend yield, revenue, EPS, ROE, debt ratios, etc.)
-- Fills the professional report template with actual values
-- Saves the report to `evaluaciones/{TICKER}/informe-yfinance.md`
+### Step 2: Execute Parallel Streams
+Simultaneously executes two independent data collection streams:
+
+**Stream A – Technical Financial Analysis**:
+- Executes yfinance-report skill script
+- Downloads data from Yahoo Finance using `yfinance` library
+- Extracts 100+ financial metrics (price, P/E, dividend, revenue, EPS, ROE, debt ratios, etc.)
+- Saves to `evaluaciones/{TICKER}/informe-yfinance.md`
+
+**Stream B – Web-Based Fundamentals Research**:
+- Executes tavily-research mini-workflow
+- Conducts structured web research across 4 strategic dimensions:
+  - Long-term vision & strategic direction
+  - Corporate values & philosophy
+  - Competitive advantages & market position
+  - Critical management decisions
+- Generates both structured JSON and formatted markdown
+- Saves to `evaluaciones/{TICKER}/raw-search/web-search.json` and `evaluaciones/{TICKER}/informe-fundamentales.md`
+
+Both streams run **in parallel**, reducing total execution time.
 
 ### Step 3: Call berkshire-valuation
-Feeds the technical report to NotebookLM which:
-- Reads the entire yfinance informe without modifications
+Feeds both technical and fundamentals reports to NotebookLM which:
+- Reads both the yfinance technical report and fundamentals report without modifications
 - Applies Berkshire Hathaway's investment framework, analyzing:
-  - **Competitive moat**: Is there a durable competitive advantage?
+  - **Competitive moat**: Is there a durable competitive advantage? (using both technical metrics and strategic research)
   - **Management quality**: Do executives have a strong track record?
   - **Margin of safety**: Is the valuation attractive enough to justify the risk?
   - **Growth sustainability**: Can the company maintain competitive advantage long-term?
-  - **Investment thesis**: Buy/hold/avoid with structured reasoning
-- Returns a markdown analysis incorporating Berkshire's principles
+  - **Investment thesis**: Buy/hold/avoid with structured reasoning integrating all available data
+- Returns a markdown analysis incorporating Berkshire's principles with full contextual awareness
 - Saves to `evaluaciones/{TICKER}/informe-berkshire.md`
 
 ## Input Format
@@ -85,8 +104,21 @@ The skill handles all these formats automatically.
    - Technical analysis & corporate events
    - Management & SWOT analysis
 
-2. **informe-berkshire.md** — Berkshire Hathaway investment analysis including:
-   - Competitive advantage assessment
+2. **raw-search/web-search.json** — Structured web research:
+   - Metadata (ticker, company name, sector, search date)
+   - Vision section (long-term strategy and plans)
+   - Values section (corporate philosophy and ESG)
+   - Competitive advantages (market position, unique strengths)
+   - Critical decisions (management response to crises)
+
+3. **informe-fundamentales.md** — Formatted fundamentals report:
+   - Header with company info and search metadata
+   - Sections for each research dimension
+   - Factual findings with relevance scores
+   - Ready for human review and analysis
+
+4. **informe-berkshire.md** — Berkshire Hathaway investment analysis including:
+   - Competitive advantage assessment (integrating both technical and web research)
    - Management quality evaluation
    - Valuation vs. intrinsic value
    - Risk assessment (margin of safety)
@@ -100,51 +132,77 @@ The skill handles all these formats automatically.
 Analiza AAPL y dame tu recomendación de inversión
 ```
 
-**Workflow executes**:
+**Workflow executes** (parallel phase):
+```
+[PARALELO] Ejecutando investigación técnica e investigación web en paralelo...
+  [A] Generando informe técnico (yfinance) para AAPL...
+  [B] Generando investigación web (Tavily) para AAPL...
+  ✓ Informe técnico generado
+  ✓ Investigación web y fundamentales generados
+
+✅ Investigación técnica y web completadas
+
+  [C] Generando análisis Berkshire para AAPL...
+  ✓ Análisis Berkshire generado
+
+✅ Workflow completado exitosamente para AAPL
+
+📄 Archivos generados:
+   • Informe técnico (yfinance): .../evaluaciones/AAPL/informe-yfinance.md
+   • Investigación web JSON (Tavily): .../evaluaciones/AAPL/raw-search/web-search.json
+   • Informe de fundamentales (web): .../evaluaciones/AAPL/informe-fundamentales.md
+   • Análisis Berkshire: .../evaluaciones/AAPL/informe-berkshire.md
+```
+
 1. Extracts ticker: `AAPL`
-2. Calls yfinance-report → generates `evaluaciones/AAPL/informe-yfinance.md`
-3. Calls berkshire-valuation → generates `evaluaciones/AAPL/informe-berkshire.md`
-4. Reports both files to user
-
-**User input**:
-```
-Should I buy Microsoft?
-```
-
-**Workflow executes**:
-1. Extracts ticker from context: `MSFT` (via skill parsing)
-2. Runs full two-phase analysis
-3. Returns both comprehensive reports
+2. Launches parallel streams for yfinance and web research
+3. Waits for both to complete
+4. Calls berkshire-valuation with both reports
+5. Returns all four comprehensive documents
 
 ## Error Handling
 
-If either phase fails:
+If any phase fails:
 - **yfinance-report fails** (invalid ticker, API issues): Workflow stops with clear error message
-- **berkshire-valuation fails** (auth issues, timeout): Returns partial result (technical report only) with explanation
+- **tavily-research fails** (API limit, connection): Workflow stops with clear error message
+- **berkshire-valuation fails** (auth issues, timeout): Returns partial result (technical + fundamentals reports) with explanation
 - **File not found**: Reports which file wasn't generated and suggests manual review
 
 ## Dependencies
 
-- **Python 3.7+** (inherited from both base skills)
+- **Python 3.7+** (inherited from base skills)
 - **yfinance** (for financial data)
 - **notebooklm-py** (for Berkshire analysis via NotebookLM)
 - **pandas** (optional, recommended for data processing)
+- **TAVILY_API_KEY** (environment variable for web research)
 - **NotebookLM authentication** (pre-configured storage_state.json required)
+
+## Parallel Execution Performance
+
+- **Sequential approach** (old): yfinance (60s) + berkshire (120s) = ~180s
+- **Parallel approach** (new): max(yfinance: 60s, tavily: 180s) + berkshire (120s) = ~300s total
+  - Yfinance and tavily run simultaneously, so total time is max of both + berkshire
+  - Provides more comprehensive analysis with minimal time penalty
 
 ## Limitations & Considerations
 
 - **Ticker validation**: Accepts 1-5 character alphanumeric symbols (standard stock tickers)
 - **Market hours**: Most accurate during market hours when real-time data is fresh
+- **Tavily API**: Web research requires TAVILY_API_KEY environment variable
 - **NotebookLM dependency**: Berkshire analysis requires active NotebookLM authentication
-- **Rate limits**: Respect yfinance and NotebookLM API rate limits for batch operations
+- **Rate limits**: Respect yfinance, Tavily, and NotebookLM API rate limits for batch operations
 
 ## Tips for Best Results
 
 1. **Provide clear context**: "Analyze AAPL" is better than "what do you think?" (helps extraction)
 2. **One ticker at a time**: Run this workflow separately for each ticker you want to compare
-3. **Review both reports**: The yfinance report is technical baseline; the Berkshire analysis is the investment thesis
-4. **Use for comparison**: Run workflow for multiple tickers, then compare the informe-berkshire.md outputs to see Berkshire's relative assessments
-5. **Export for sharing**: Both markdown files are formatted for easy sharing, printing, or conversion to PDF
+3. **Review all reports**: 
+   - yfinance report is technical baseline
+   - Fundamentals report provides strategic context
+   - Berkshire analysis integrates both for investment thesis
+4. **Use for comparison**: Run workflow for multiple tickers, then compare all reports
+5. **Export for sharing**: All markdown files are formatted for easy sharing, printing, or PDF conversion
+6. **Enable environment variable**: Ensure `TAVILY_API_KEY` is set for web research functionality
 
 ## Technical Details
 
