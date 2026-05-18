@@ -112,6 +112,6 @@ When yfinance doesn't provide a value:
 
 - **Required:** Python 3.7+, `yfinance`
 - **Optional:** `pandas` for advanced processing
-- **Template:** `plantilla.md` in repo root
+- **Template:** in `./references/plantilla.md`
 - **Execution time:** 10-30 seconds per report
 - **Script:** See `scripts/generate_report.py`
