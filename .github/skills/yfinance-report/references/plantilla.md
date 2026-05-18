@@ -240,7 +240,31 @@ Opciones Disponibles: {OPTION_EXP_1}, {OPTION_EXP_2}, {OPTION_EXP_3}, {OPTION_EX
 
 ---
 
-## 15. Eventos Corporativos
+## 15. Ratios Sharpe y Sortino
+
+### Sharpe Ratio
+El ratio Sharpe mide el retorno ajustado por riesgo total. Valores más altos indican mejor desempeño relativo al riesgo asumido.
+
+| Período | Sharpe Ratio |
+| :--- | :--- |
+| **Últimos 1 Año** | {SHARPE_RATIO_1Y} |
+| **Últimos 3 Años** | {SHARPE_RATIO_3Y} |
+| **Últimos 5 Años** | {SHARPE_RATIO_5Y} |
+| **Últimos 10 Años** | {SHARPE_RATIO_10Y} |
+
+### Sortino Ratio
+El ratio Sortino es similar al Sharpe, pero solo considera la volatilidad del lado negativo (riesgo a la baja). Valores más altos indican mejor protección contra caídas.
+
+| Período | Sortino Ratio |
+| :--- | :--- |
+| **Últimos 1 Año** | {SORTINO_RATIO_1Y} |
+| **Últimos 3 Años** | {SORTINO_RATIO_3Y} |
+| **Últimos 5 Años** | {SORTINO_RATIO_5Y} |
+| **Últimos 10 Años** | {SORTINO_RATIO_10Y} |
+
+---
+
+## 16. Eventos Corporativos
 
 ### Ganancias
 | Fecha | Descripción |
@@ -259,7 +283,7 @@ Opciones Disponibles: {OPTION_EXP_1}, {OPTION_EXP_2}, {OPTION_EXP_3}, {OPTION_EX
 
 ---
 
-## 16. Recomendaciones de Analistas
+## 17. Recomendaciones de Analistas
 
 | Recomendación | Número | Cambio |
 | :--- | :--- | :--- |
@@ -277,7 +301,7 @@ Opciones Disponibles: {OPTION_EXP_1}, {OPTION_EXP_2}, {OPTION_EXP_3}, {OPTION_EX
 
 ---
 
-## 17. Gestión Ejecutiva
+## 18. Gestión Ejecutiva
 
 | Cargo | Nombre | Salario |
 | :--- | :--- | :--- |
@@ -287,7 +311,7 @@ Opciones Disponibles: {OPTION_EXP_1}, {OPTION_EXP_2}, {OPTION_EXP_3}, {OPTION_EX
 
 ---
 
-## 18. Análisis FODA
+## 19. Análisis FODA
 
 ### Fortalezas
 1. {STRENGTH_1}
@@ -309,7 +333,7 @@ Opciones Disponibles: {OPTION_EXP_1}, {OPTION_EXP_2}, {OPTION_EXP_3}, {OPTION_EX
 
 ---
 
-## 19. Divisiones de Acciones
+## 20. Divisiones de Acciones
 
 | Fecha | Ratio |
 | :--- | :--- |
@@ -318,7 +342,7 @@ Opciones Disponibles: {OPTION_EXP_1}, {OPTION_EXP_2}, {OPTION_EXP_3}, {OPTION_EX
 
 ---
 
-## 20. Conclusiones
+## 21. Conclusiones
 
 {ANALYST_CONCLUSION}
 
