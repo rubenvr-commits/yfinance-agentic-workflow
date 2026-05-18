@@ -1,6 +1,6 @@
 ---
 name: yfinance-report
-description: "Generate comprehensive financial reports for any stock ticker using yfinance data and a professional markdown template. Use this skill whenever the user asks to analyze a stock, create a financial report, research a company's financials, or when they mention a ticker symbol and want financial analysis. This skill pulls real-time data from Yahoo Finance (via yfinance), extracts key financial metrics (prices, valuations, balance sheet, dividends, options), and fills a professional report template automatically. Output is saved to evaluaciones/{ticker}/informe-yfinance.md for easy organization."
+description: "Generate comprehensive financial reports for any stock ticker using yfinance data and a professional markdown template. Use this skill whenever the user asks to analyze a stock, create a financial report, research a company's financials, or when they mention a ticker symbol and want financial analysis. This skill pulls real-time data from Yahoo Finance (via yfinance), extracts key financial metrics (prices, valuations, balance sheet, dividends, options), and fills a professional report template automatically. Output is saved to evaluaciones/{ticker}/informe-tecnico.md for easy organization."
 compatibility: "Python 3.7+, yfinance, pandas (optional but recommended)"
 ---
 
@@ -14,7 +14,7 @@ Generate professional financial reports for any stock ticker. This skill automat
 2. **Extracts and processes** ~100+ financial metrics (prices, valuations, balance sheet, dividends, cash flows, options)
 3. **Handles missing data** gracefully (shows "N/A" for unavailable fields)
 4. **Fills the report template** (`references/plantilla.md`) with actual values
-5. **Saves the report** to `evaluaciones/{TICKER}/informe-yfinance.md`
+5. **Saves the report** to `evaluaciones/{TICKER}/informe-tecnico.md`
 
 ## When to Use This Skill
 
@@ -36,7 +36,7 @@ The skill will automatically locate `plantilla.md` in the `.github/skills/yfinan
 
 ## Output
 
-**File location:** `evaluaciones/{TICKER}/informe-yfinance.md`
+**File location:** `evaluaciones/{TICKER}/informe-tecnico.md`
 
 **Contents:** 15 major sections covering asset identification, current pricing, capitalization, valuation multiples, dividends, financial statements, profitability, financial health, growth metrics, shareholder info, options data, technical analysis, corporate events, executive management, and SWOT analysis.
 
@@ -55,7 +55,7 @@ For each template field (`{TICKER}`, `{CURRENT_PRICE}`, `{TRAILING_PE}`, etc.):
 Uses Python's `.format()` method to fill all placeholders with actual yfinance data.
 
 ### Step 4: Save
-Creates `evaluaciones/{TICKER}/` directory and saves the report as `informe-yfinance.md`.
+Creates `evaluaciones/{TICKER}/` directory and saves the report as `informe-tecnico.md`.
 
 ## Example Usage
 
@@ -88,11 +88,11 @@ data = {
 filled = template.format(**data)
 
 os.makedirs(f"evaluaciones/{ticker_symbol}", exist_ok=True)
-with open(f"evaluaciones/{ticker_symbol}/informe-yfinance.md", "w", encoding="utf-8") as f:
+with open(f"evaluaciones/{ticker_symbol}/informe-tecnico.md", "w", encoding="utf-8") as f:
     f.write(filled)
 ```
 
-**Output:** Professional markdown report in `evaluaciones/AAPL/informe-yfinance.md`
+**Output:** Professional markdown report in `evaluaciones/AAPL/informe-tecnico.md`
 
 ## Handling Missing Data
 
@@ -112,6 +112,6 @@ When yfinance doesn't provide a value:
 
 - **Required:** Python 3.7+, `yfinance`
 - **Optional:** `pandas` for advanced processing
-- **Template:** `plantilla.md` in repo root
+- **Template:** in `./references/plantilla.md`
 - **Execution time:** 10-30 seconds per report
 - **Script:** See `scripts/generate_report.py`

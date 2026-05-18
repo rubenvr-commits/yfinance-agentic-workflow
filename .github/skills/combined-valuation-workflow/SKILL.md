@@ -18,7 +18,7 @@ Automate the complete analysis of any stock ticker using a three-phase parallel 
 2. **Phase 2 – Value Assessment**: Automatically feeds both technical and fundamentals reports to a NotebookLM trained on 27 years of Berkshire Hathaway shareholder letters, which analyzes the company through the lens of Warren Buffett and Charlie Munger's investment philosophy — assessing competitive moats, management quality, margin of safety, and growth sustainability with complete contextual information.
 
 3. **Output**: Four markdown reports saved to `evaluaciones/{TICKER}/`:
-   - `informe-yfinance.md` — Technical financial baseline (~100+ metrics)
+   - `informe-tecnico.md` — Technical financial baseline (~100+ metrics)
    - `raw-search/web-search.json` — Structured web research data (4 dimensions)
    - `informe-fundamentales.md` — Formatted fundamentals from web research
    - `informe-berkshire.md` — Investment thesis and valuation recommendation (using both technical and fundamentals data)
@@ -53,7 +53,7 @@ Simultaneously executes two independent data collection streams:
 - Executes yfinance-report skill script
 - Downloads data from Yahoo Finance using `yfinance` library
 - Extracts 100+ financial metrics (price, P/E, dividend, revenue, EPS, ROE, debt ratios, etc.)
-- Saves to `evaluaciones/{TICKER}/informe-yfinance.md`
+- Saves to `evaluaciones/{TICKER}/informe-tecnico.md`
 
 **Stream B – Web-Based Fundamentals Research**:
 - Executes tavily-research mini-workflow
@@ -94,7 +94,7 @@ The skill handles all these formats automatically.
 **Location**: `evaluaciones/{TICKER}/`
 
 **Files generated**:
-1. **informe-yfinance.md** — 15+ sections covering:
+1. **informe-tecnico.md** — 15+ sections covering:
    - Asset identification & current pricing
    - Valuation metrics (P/E, P/B, PEG, dividend yield)
    - Financial statements (balance sheet, income statement, cash flow)
@@ -148,7 +148,7 @@ Analiza AAPL y dame tu recomendación de inversión
 ✅ Workflow completado exitosamente para AAPL
 
 📄 Archivos generados:
-   • Informe técnico (yfinance): .../evaluaciones/AAPL/informe-yfinance.md
+   • Informe técnico (yfinance): .../evaluaciones/AAPL/informe-tecnico.md
    • Investigación web JSON (Tavily): .../evaluaciones/AAPL/raw-search/web-search.json
    • Informe de fundamentales (web): .../evaluaciones/AAPL/informe-fundamentales.md
    • Análisis Berkshire: .../evaluaciones/AAPL/informe-berkshire.md
@@ -223,7 +223,7 @@ Validate ticker format (1-5 chars, alphanumeric)
     ↓
 Call yfinance-report script
     ↓
-Wait for informe-yfinance.md creation (up to 30 seconds)
+Wait for informe-tecnico.md creation (up to 30 seconds)
     ↓
 Read informe file content
     ↓

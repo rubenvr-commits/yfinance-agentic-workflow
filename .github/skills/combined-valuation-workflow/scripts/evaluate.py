@@ -3,7 +3,7 @@
 Script de evaluación para combined-valuation-workflow skill.
 
 Verifica que:
-1. Ambos archivos (informe-yfinance.md y informe-berkshire.md) fueron creados
+1. Ambos archivos (informe-tecnico.md y informe-berkshire.md) fueron creados
 2. Los archivos tienen contenido válido y no están vacíos
 3. El workflow se ejecutó sin errores críticos
 4. Los archivos están en la ubicación correcta
@@ -17,7 +17,7 @@ import argparse
 
 def check_files_exist(ticker: str, workspace_root: Path) -> bool:
     """Verifica que ambos archivos existan."""
-    yfinance_file = workspace_root / 'evaluaciones' / ticker / 'informe-yfinance.md'
+    yfinance_file = workspace_root / 'evaluaciones' / ticker / 'informe-tecnico.md'
     berkshire_file = workspace_root / 'evaluaciones' / ticker / 'informe-berkshire.md'
     
     print(f"  Checking yfinance report: {yfinance_file}")
@@ -37,7 +37,7 @@ def check_files_exist(ticker: str, workspace_root: Path) -> bool:
 
 def check_file_content(ticker: str, workspace_root: Path) -> bool:
     """Verifica que los archivos tengan contenido válido."""
-    yfinance_file = workspace_root / 'evaluaciones' / ticker / 'informe-yfinance.md'
+    yfinance_file = workspace_root / 'evaluaciones' / ticker / 'informe-tecnico.md'
     berkshire_file = workspace_root / 'evaluaciones' / ticker / 'informe-berkshire.md'
     
     # Verificar contenido de yfinance
@@ -114,7 +114,7 @@ def grade_eval(ticker: str, workspace_root: Path) -> dict:
     
     # Assertion 3: Files are in correct location
     print("\n[Assertion 3] Files are in correct directory")
-    correct_path = (workspace_root / 'evaluaciones' / ticker / 'informe-yfinance.md').exists()
+    correct_path = (workspace_root / 'evaluaciones' / ticker / 'informe-tecnico.md').exists()
     results["assertions"].append({
         "text": "Files are located in evaluaciones/{ticker}/ directory",
         "passed": correct_path,

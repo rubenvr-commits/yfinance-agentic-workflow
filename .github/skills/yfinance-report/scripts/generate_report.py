@@ -16,8 +16,9 @@ from pathlib import Path
 try:
     import yfinance as yf
     import pandas as pd
+    import numpy as np
 except ImportError:
-    print("Error: yfinance is required. Install with: pip install yfinance pandas")
+    print("Error: yfinance and numpy are required. Install with: pip install yfinance pandas numpy")
     sys.exit(1)
 
 
@@ -57,6 +58,97 @@ def format_large_number(value):
         return f"{int(float(value)):,}"
     except (ValueError, TypeError):
         return str(value)
+
+
+def calculate_sharpe_ratio(ticker, years, risk_free_rate=0.02):
+    """
+    Calculate Sharpe ratio for a given period.
+    
+    Args:
+        ticker: yfinance Ticker object
+        years: Number of years to analyze
+        risk_free_rate: Annual risk-free rate (default 2%)
+    
+    Returns:
+        Sharpe ratio or "N/A" if calculation fails
+    """
+    try:
+        # Get historical price data
+        hist = ticker.history(period=f"{years}y")
+        
+        if hist.empty or len(hist) < 30:
+            return "N/A"
+        
+        # Calculate daily returns
+        returns = hist['Close'].pct_change().dropna()
+        
+        if len(returns) == 0:
+            return "N/A"
+        
+        # Calculate annualized metrics
+        annual_return = returns.mean() * 252
+        annual_volatility = returns.std() * np.sqrt(252)
+        
+        if annual_volatility == 0:
+            return "N/A"
+        
+        # Sharpe ratio formula: (return - risk_free_rate) / volatility
+        sharpe = (annual_return - risk_free_rate) / annual_volatility
+        return round(sharpe, 2)
+    
+    except Exception as e:
+        print(f"Error calculating Sharpe ratio for {years}y: {e}")
+        return "N/A"
+
+
+def calculate_sortino_ratio(ticker, years, risk_free_rate=0.02):
+    """
+    Calculate Sortino ratio for a given period.
+    Only considers downside volatility (negative returns).
+    
+    Args:
+        ticker: yfinance Ticker object
+        years: Number of years to analyze
+        risk_free_rate: Annual risk-free rate (default 2%)
+    
+    Returns:
+        Sortino ratio or "N/A" if calculation fails
+    """
+    try:
+        # Get historical price data
+        hist = ticker.history(period=f"{years}y")
+        
+        if hist.empty or len(hist) < 30:
+            return "N/A"
+        
+        # Calculate daily returns
+        returns = hist['Close'].pct_change().dropna()
+        
+        if len(returns) == 0:
+            return "N/A"
+        
+        # Calculate annualized return
+        annual_return = returns.mean() * 252
+        
+        # Calculate downside deviation (only negative returns)
+        downside_returns = returns[returns < 0]
+        if len(downside_returns) == 0:
+            # If there are no negative returns, downside deviation is 0
+            # In this case, Sortino is theoretically infinite
+            return "Inf" if annual_return > 0 else "0"
+        
+        downside_deviation = downside_returns.std() * np.sqrt(252)
+        
+        if downside_deviation == 0:
+            return "Inf" if annual_return > 0 else "0"
+        
+        # Sortino ratio formula: (return - risk_free_rate) / downside_deviation
+        sortino = (annual_return - risk_free_rate) / downside_deviation
+        return round(sortino, 2)
+    
+    except Exception as e:
+        print(f"Error calculating Sortino ratio for {years}y: {e}")
+        return "N/A"
 
 
 def fetch_ticker_data(ticker_symbol):
@@ -234,6 +326,16 @@ def build_data_dict(ticker_symbol, ticker, info):
         "TARGET_PRICE": format_currency(safe_get(info, "targetMeanPrice")),
         "UPSIDE_DOWNSIDE": safe_get(info, "targetMeanPrice", "N/A"),
         
+        # === Sharpe & Sortino Ratios ===
+        "SHARPE_RATIO_1Y": calculate_sharpe_ratio(ticker, 1),
+        "SHARPE_RATIO_3Y": calculate_sharpe_ratio(ticker, 3),
+        "SHARPE_RATIO_5Y": calculate_sharpe_ratio(ticker, 5),
+        "SHARPE_RATIO_10Y": calculate_sharpe_ratio(ticker, 10),
+        "SORTINO_RATIO_1Y": calculate_sortino_ratio(ticker, 1),
+        "SORTINO_RATIO_3Y": calculate_sortino_ratio(ticker, 3),
+        "SORTINO_RATIO_5Y": calculate_sortino_ratio(ticker, 5),
+        "SORTINO_RATIO_10Y": calculate_sortino_ratio(ticker, 10),
+        
         # === Executive Management (dummy) ===
         "CEO_NAME": "N/A", "CEO_SALARY": "N/A",
         "CFO_NAME": "N/A", "CFO_SALARY": "N/A",
@@ -307,7 +409,7 @@ def generate_report(ticker_symbol):
     output_dir = Path("evaluaciones") / ticker_symbol
     output_dir.mkdir(parents=True, exist_ok=True)
     
-    output_file = output_dir / "informe-yfinance.md"
+    output_file = output_dir / "informe-tecnico.md"
     with open(output_file, "w", encoding="utf-8") as f:
         f.write(filled)
     
