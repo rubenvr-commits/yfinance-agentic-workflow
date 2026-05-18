@@ -227,6 +227,77 @@ pip install mcp  # MCP SDK (if not using stdio directly)
   python .github\skills\tavily-research\scripts\researcher.py --ticker REP.MC
   ```
 
+## Mini-Workflow: Automated Fundamentals Report Generation
+
+### Overview
+Use the **run_workflow.py** script to automatically generate both the raw research JSON **and** the formatted fundamentals markdown report in a single command.
+
+This workflow:
+1. Executes `tavily-research` to generate `evaluaciones/{ticker}/raw-search/web-search.json`
+2. Upon success, automatically invokes `web-search-fundamentales` to generate `evaluaciones/{ticker}/informe-fundamentales.md`
+3. Reports both output files at completion
+
+### Usage
+
+**From the workspace root:**
+```bash
+python .github/skills/tavily-research/scripts/run_workflow.py --ticker REP.MC
+```
+
+**With company metadata:**
+```bash
+python .github/skills/tavily-research/scripts/run_workflow.py \
+  --ticker REP.MC \
+  --company-name "Repsol, S.A." \
+  --sector "Energy / Oil & Gas"
+```
+
+**Extract ticker from natural language:**
+```bash
+python .github/skills/tavily-research/scripts/run_workflow.py \
+  --from-natural "investigar Apple Inc (AAPL)"
+```
+
+### Output
+
+The workflow generates both files in the `evaluaciones/{ticker}/` directory:
+
+```
+evaluaciones/REP.MC/
+├── raw-search/
+│   └── web-search.json          # ← Structured research output
+└── informe-fundamentales.md     # ← Formatted fundamentals report
+```
+
+**Example output:**
+```
+🔍 Starting research workflow for ticker: REP.MC
+
+[1/2] Generating Tavily research for REP.MC...
+   ✓ Research completed: .../evaluaciones/REP.MC/raw-search/web-search.json
+
+[2/2] Generating fundamentals report...
+   ✓ Fundamentals report generated: .../evaluaciones/REP.MC/informe-fundamentales.md
+
+✅ Workflow completed successfully for REP.MC
+
+📄 Generated files:
+   • Research JSON: .../evaluaciones/REP.MC/raw-search/web-search.json
+   • Fundamentals Report: .../evaluaciones/REP.MC/informe-fundamentales.md
+```
+
+### When to Use
+
+- You want a complete research analysis **with formatted output** in one step
+- You need both structured JSON (for downstream processing) **and** human-readable markdown (for review)
+- You're integrating with other analysis workflows that expect `informe-fundamentales.md` to already exist
+
+### Integration with Other Skills
+
+After running this workflow, you can use the generated `informe-fundamentales.md` with:
+- **combined-valuation-workflow**: Feeds fundamentals into the complete valuation pipeline
+- **berkshire-valuation**: Provides web research context for Berkshire-based investment analysis
+
 ## Advanced Usage
 
 ### Custom Queries

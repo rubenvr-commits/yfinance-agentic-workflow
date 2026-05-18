@@ -46,6 +46,22 @@ This skill reads `evaluaciones/{ticker}/raw-search/web-search.json`, removes API
 5. If a category has no valid results, note that no factual results were found.
 6. Save the markdown report to `evaluaciones/{ticker}/informe-fundamentales.md`.
 
+## Mini-Workflow Integration
+
+This skill is automatically invoked by the **tavily-research mini-workflow** to generate the fundamentals report immediately after research completion.
+
+**Run both tavily-research and web-search-fundamentales together:**
+```bash
+python .github/skills/tavily-research/scripts/run_workflow.py --ticker REP.MC
+```
+
+This command:
+1. Executes tavily-research → generates `evaluaciones/{ticker}/raw-search/web-search.json`
+2. Automatically calls web-search-fundamentales → generates `evaluaciones/{ticker}/informe-fundamentales.md`
+3. Reports both output files
+
+See [tavily-research Mini-Workflow documentation](../tavily-research/SKILL.md#mini-workflow-automated-fundamentals-report-generation) for full details.
+
 ## Script
 
 Use `scripts/extract_fundamentales.py` in this skill folder for deterministic conversion.
