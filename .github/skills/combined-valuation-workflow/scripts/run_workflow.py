@@ -202,11 +202,11 @@ def call_berkshire_valuation(ticker: str, yfinance_path: str, fundamentales_path
     if fundamentales_content:
         question = f"""Informe técnico y de investigación web para el análisis:
 
-## INFORME TÉCNICO (YFINANCE)
-{yfinance_content}
-
 ## INFORME DE FUNDAMENTALES (INVESTIGACIÓN WEB)
 {fundamentales_content}
+
+## INFORME TÉCNICO (YFINANCE)
+{yfinance_content}
 
 Basándote en los principios de inversión de Berkshire Hathaway (Warren Buffett y Charlie Munger), analiza estos informes y proporciona una valoración de la empresa considerando:
 1. La fortaleza competitiva y moat económico
