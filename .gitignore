@@ -1,7 +1,4 @@
-postgres/18/
 .venv/
 .env
-mcp_config.json
-
 evaluaciones/*
 **/__pycache__/
