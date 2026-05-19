@@ -214,6 +214,121 @@ def calculate_revenue_cagr(ticker, years):
         return "N/A"
 
 
+def build_swot_from_metrics(info, sector="sector desconocido", country="país desconocido"):
+    """
+    Build SWOT analysis from actual financial metrics.
+    
+    Args:
+        info: yfinance Ticker info dict
+        sector: Company sector
+        country: Company country
+    
+    Returns:
+        Dict with STRENGTH_*, WEAKNESS_*, OPPORTUNITY_*, RISK_*, ANALYST_CONCLUSION keys
+    """
+    result = {}
+    
+    # Extract metrics safely
+    roe = safe_get(info, "returnOnEquity")
+    profit_margins = safe_get(info, "profitMargins")
+    debt_to_equity = safe_get(info, "debtToEquity")
+    fcf = safe_get(info, "freeCashflow")
+    current_ratio = safe_get(info, "currentRatio")
+    revenue_growth = safe_get(info, "revenueGrowth")
+    pe_ratio = safe_get(info, "trailingPE")
+    
+    # Convert to float safely
+    def to_float(val):
+        if val == "N/A":
+            return None
+        try:
+            return float(val)
+        except (ValueError, TypeError):
+            return None
+    
+    roe_val = to_float(roe)
+    profit_margins_val = to_float(profit_margins)
+    debt_to_equity_val = to_float(debt_to_equity)
+    fcf_val = to_float(fcf)
+    current_ratio_val = to_float(current_ratio)
+    revenue_growth_val = to_float(revenue_growth)
+    pe_val = to_float(pe_ratio)
+    
+    # Build Strengths (select best 3 from candidates)
+    strengths_candidates = []
+    
+    if roe_val is not None and roe_val > 0.15:
+        strengths_candidates.append(f"ROE del {roe_val:.1%}: genera valor sostenido para el accionista")
+    
+    if profit_margins_val is not None and profit_margins_val > 0.20:
+        strengths_candidates.append(f"Margen neto del {profit_margins_val:.1%}: poder de fijación de precios elevado")
+    
+    if debt_to_equity_val is not None and debt_to_equity_val < 1.0:
+        strengths_candidates.append(f"Balance saneado con ratio deuda/patrimonio de {debt_to_equity_val:.2f}")
+    
+    if fcf_val is not None and fcf_val > 0:
+        fcf_formatted = format_currency(fcf_val)
+        strengths_candidates.append(f"Generación de FCF de {fcf_formatted}")
+    
+    # Take best 3 strengths
+    for i in range(1, 4):
+        if i - 1 < len(strengths_candidates):
+            result[f"STRENGTH_{i}"] = strengths_candidates[i - 1]
+        else:
+            result[f"STRENGTH_{i}"] = "N/A"
+    
+    # Build Weaknesses (select worst up to 3)
+    weaknesses_candidates = []
+    
+    if current_ratio_val is not None and current_ratio_val < 1.0:
+        weaknesses_candidates.append(f"Razón circulante de {current_ratio_val:.2f}: posible presión de liquidez a corto plazo")
+    
+    if debt_to_equity_val is not None and debt_to_equity_val > 2.0:
+        weaknesses_candidates.append(f"Apalancamiento elevado: deuda/patrimonio de {debt_to_equity_val:.2f}")
+    
+    if revenue_growth_val is not None and revenue_growth_val < 0:
+        weaknesses_candidates.append(f"Contracción de ingresos YoY del {revenue_growth_val:.1%}")
+    
+    if profit_margins_val is not None and profit_margins_val < 0.05:
+        weaknesses_candidates.append(f"Márgenes netos ajustados del {profit_margins_val:.1%}")
+    
+    # Take up to 3 weaknesses
+    for i in range(1, 4):
+        if i - 1 < len(weaknesses_candidates):
+            result[f"WEAKNESS_{i}"] = weaknesses_candidates[i - 1]
+        else:
+            result[f"WEAKNESS_{i}"] = "N/A"
+    
+    # Opportunities (use sector and country info)
+    result["OPPORTUNITY_1"] = f"Expansión en mercados emergentes del sector {sector}"
+    result["OPPORTUNITY_2"] = "Tendencias de digitalización e IA aplicables al negocio"
+    
+    # Risks (use sector and country info)
+    result["RISK_1"] = f"Ciclos económicos y volatilidad de mercado en el sector {sector}"
+    result["RISK_2"] = f"Cambios regulatorios o geopolíticos que afecten a {country}"
+    
+    # Analyst Conclusion: summarize 3 most relevant metrics
+    conclusion_parts = []
+    
+    if pe_val is not None:
+        conclusion_parts.append(f"P/E de {pe_val:.2f}")
+    
+    if roe_val is not None:
+        conclusion_parts.append(f"ROE del {roe_val:.1%}")
+    
+    if fcf_val is not None:
+        fcf_formatted = format_currency(fcf_val)
+        conclusion_parts.append(f"FCF de {fcf_formatted}")
+    
+    if conclusion_parts:
+        metrics_summary = ", ".join(conclusion_parts)
+        result["ANALYST_CONCLUSION"] = f"Basado en datos financieros disponibles, con {metrics_summary}, la empresa presenta fundamentales apropiados para análisis posterior."
+    else:
+        result["ANALYST_CONCLUSION"] = "Basado en datos financieros disponibles, la empresa presenta fundamentales que requieren análisis posterior."
+    
+    return result
+
+
 def compute_debt_metrics(info):
     """
     Compute debt-related financial metrics.
@@ -508,19 +623,6 @@ def build_data_dict(ticker_symbol, ticker, info):
         "CFO_NAME": "N/A", "CFO_SALARY": "N/A",
         "COO_NAME": "N/A", "COO_SALARY": "N/A",
         
-        # === SWOT (dummy) ===
-        "STRENGTH_1": "Strong market position and brand recognition",
-        "STRENGTH_2": "Diverse product portfolio and revenue streams",
-        "STRENGTH_3": "Solid financial performance and cash generation",
-        "WEAKNESS_1": "Competition from emerging players",
-        "WEAKNESS_2": "Dependence on key markets",
-        "WEAKNESS_3": "Potential regulatory risks",
-        "OPPORTUNITY_1": "Expansion into new markets and segments",
-        "OPPORTUNITY_2": "Technology innovation and digital transformation",
-        "RISK_1": "Economic cycles and market volatility",
-        "RISK_2": "Regulatory and geopolitical changes",
-        "ANALYST_CONCLUSION": "Based on available financial data, this company shows stable fundamentals with growth potential. Further analysis recommended.",
-        
         # === Splits (dummy) ===
         "SPLIT_DATE_1": "N/A", "SPLIT_RATIO_1": "N/A",
         "SPLIT_DATE_2": "N/A", "SPLIT_RATIO_2": "N/A",
@@ -534,6 +636,11 @@ def build_data_dict(ticker_symbol, ticker, info):
     
     # Merge computed debt metrics
     data.update(compute_debt_metrics(info))
+    
+    # Merge SWOT analysis from metrics
+    sector = safe_get(info, "sector", "sector desconocido")
+    country = safe_get(info, "country", "país desconocido")
+    data.update(build_swot_from_metrics(info, sector, country))
     
     return data
 
