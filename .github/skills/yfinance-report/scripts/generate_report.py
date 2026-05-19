@@ -151,6 +151,66 @@ def calculate_sortino_ratio(ticker, years, risk_free_rate=0.02):
         return "N/A"
 
 
+def build_technical_section(ticker):
+    """
+    Build technical analysis section with historical price data.
+    
+    Args:
+        ticker: yfinance Ticker object
+    
+    Returns:
+        Dict with keys OPEN_{period}, CLOSE_{period}, HIGH_{period}, LOW_{period}, 
+        CHANGE_{period}, AVG_VOL_{period} for periods 1M, 3M, 6M, 1Y
+    """
+    result = {}
+    periods = [("1mo", "1M"), ("3mo", "3M"), ("6mo", "6M"), ("1y", "1Y")]
+    
+    for period, suffix in periods:
+        try:
+            hist = ticker.history(period=period)
+            
+            if hist.empty or len(hist) == 0:
+                result[f"OPEN_{suffix}"] = "N/A"
+                result[f"CLOSE_{suffix}"] = "N/A"
+                result[f"HIGH_{suffix}"] = "N/A"
+                result[f"LOW_{suffix}"] = "N/A"
+                result[f"CHANGE_{suffix}"] = "N/A"
+                result[f"AVG_VOL_{suffix}"] = "N/A"
+                continue
+            
+            # Extract values
+            open_price = hist["Open"].iloc[0]
+            close_price = hist["Close"].iloc[-1]
+            high_price = hist["High"].max()
+            low_price = hist["Low"].min()
+            avg_volume = hist["Volume"].mean()
+            
+            # Calculate percentage change
+            if open_price != 0:
+                change_pct = ((close_price - open_price) / open_price) * 100
+            else:
+                change_pct = 0
+            
+            # Format and store
+            result[f"OPEN_{suffix}"] = format_currency(open_price)
+            result[f"CLOSE_{suffix}"] = format_currency(close_price)
+            result[f"HIGH_{suffix}"] = format_currency(high_price)
+            result[f"LOW_{suffix}"] = format_currency(low_price)
+            result[f"CHANGE_{suffix}"] = format_percentage(change_pct)
+            result[f"AVG_VOL_{suffix}"] = format_large_number(avg_volume)
+            
+        except Exception as e:
+            print(f"Error processing {period} history: {e}")
+            result[f"OPEN_{suffix}"] = "N/A"
+            result[f"CLOSE_{suffix}"] = "N/A"
+            result[f"HIGH_{suffix}"] = "N/A"
+            result[f"LOW_{suffix}"] = "N/A"
+            result[f"CHANGE_{suffix}"] = "N/A"
+            result[f"AVG_VOL_{suffix}"] = "N/A"
+    
+    return result
+
+
 def fetch_ticker_data(ticker_symbol):
     """Fetch financial data from yfinance."""
     try:
@@ -301,12 +361,6 @@ def build_data_dict(ticker_symbol, ticker, info):
         "STRIKE_1": "N/A", "BID_1": "N/A", "ASK_1": "N/A", "VOL_1": "N/A", "IV_1": "N/A", "DELTA_1": "N/A", "THETA_1": "N/A",
         "STRIKE_2": "N/A", "BID_2": "N/A", "ASK_2": "N/A", "VOL_2": "N/A", "IV_2": "N/A", "DELTA_2": "N/A", "THETA_2": "N/A",
         
-        # === Technical Analysis (dummy) ===
-        "OPEN_1M": "N/A", "CLOSE_1M": "N/A", "HIGH_1M": "N/A", "LOW_1M": "N/A", "CHANGE_1M": "N/A", "AVG_VOL_1M": "N/A",
-        "OPEN_3M": "N/A", "CLOSE_3M": "N/A", "HIGH_3M": "N/A", "LOW_3M": "N/A", "CHANGE_3M": "N/A", "AVG_VOL_3M": "N/A",
-        "OPEN_6M": "N/A", "CLOSE_6M": "N/A", "HIGH_6M": "N/A", "LOW_6M": "N/A", "CHANGE_6M": "N/A", "AVG_VOL_6M": "N/A",
-        "OPEN_1Y": "N/A", "CLOSE_1Y": "N/A", "HIGH_1Y": "N/A", "LOW_1Y": "N/A", "CHANGE_1Y": "N/A", "AVG_VOL_1Y": "N/A",
-        
         # === Corporate Events (dummy) ===
         "EARNINGS_DATE_1": "N/A", "EARNINGS_DESC_1": "N/A",
         "DIVIDEND_DATE_1": "N/A", "DIVIDEND_DESC_1": "N/A",
@@ -361,6 +415,9 @@ def build_data_dict(ticker_symbol, ticker, info):
         # === Footer ===
         "LAST_UPDATE": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     }
+    
+    # Merge technical analysis data
+    data.update(build_technical_section(ticker))
     
     return data
 
