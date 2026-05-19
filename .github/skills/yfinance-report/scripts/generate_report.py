@@ -60,12 +60,13 @@ def format_large_number(value):
         return str(value)
 
 
-def calculate_sharpe_ratio(ticker, years, risk_free_rate=0.02):
+def calculate_sharpe_ratio(ticker_symbol, history_data, years, risk_free_rate=0.02):
     """
     Calculate Sharpe ratio for a given period.
     
     Args:
-        ticker: yfinance Ticker object
+        ticker_symbol: Ticker symbol (for error reporting)
+        history_data: Cached historical data dictionary
         years: Number of years to analyze
         risk_free_rate: Annual risk-free rate (default 2%)
     
@@ -73,10 +74,10 @@ def calculate_sharpe_ratio(ticker, years, risk_free_rate=0.02):
         Sharpe ratio or "N/A" if calculation fails
     """
     try:
-        # Get historical price data
-        hist = ticker.history(period=f"{years}y")
+        period_str = f"{years}y"
+        hist = history_data.get(period_str)
         
-        if hist.empty or len(hist) < 30:
+        if hist is None or hist.empty or len(hist) < 30:
             return "N/A"
         
         # Calculate daily returns
@@ -101,13 +102,14 @@ def calculate_sharpe_ratio(ticker, years, risk_free_rate=0.02):
         return "N/A"
 
 
-def calculate_sortino_ratio(ticker, years, risk_free_rate=0.02):
+def calculate_sortino_ratio(ticker_symbol, history_data, years, risk_free_rate=0.02):
     """
     Calculate Sortino ratio for a given period.
     Only considers downside volatility (negative returns).
     
     Args:
-        ticker: yfinance Ticker object
+        ticker_symbol: Ticker symbol (for error reporting)
+        history_data: Cached historical data dictionary
         years: Number of years to analyze
         risk_free_rate: Annual risk-free rate (default 2%)
     
@@ -115,10 +117,10 @@ def calculate_sortino_ratio(ticker, years, risk_free_rate=0.02):
         Sortino ratio or "N/A" if calculation fails
     """
     try:
-        # Get historical price data
-        hist = ticker.history(period=f"{years}y")
+        period_str = f"{years}y"
+        hist = history_data.get(period_str)
         
-        if hist.empty or len(hist) < 30:
+        if hist is None or hist.empty or len(hist) < 30:
             return "N/A"
         
         # Calculate daily returns
@@ -425,12 +427,13 @@ def compute_debt_metrics(info):
     return result
 
 
-def build_technical_section(ticker):
+def build_technical_section(ticker_symbol, history_data):
     """
     Build technical analysis section with historical price data.
     
     Args:
-        ticker: yfinance Ticker object
+        ticker_symbol: Ticker symbol (for error reporting)
+        history_data: Cached historical data dictionary
     
     Returns:
         Dict with keys OPEN_{period}, CLOSE_{period}, HIGH_{period}, LOW_{period}, 
@@ -441,9 +444,9 @@ def build_technical_section(ticker):
     
     for period, suffix in periods:
         try:
-            hist = ticker.history(period=period)
+            hist = history_data.get(period)
             
-            if hist.empty or len(hist) == 0:
+            if hist is None or hist.empty or len(hist) == 0:
                 result[f"OPEN_{suffix}"] = "N/A"
                 result[f"CLOSE_{suffix}"] = "N/A"
                 result[f"HIGH_{suffix}"] = "N/A"
@@ -503,6 +506,25 @@ def fetch_ticker_data(ticker_symbol):
 
 def build_data_dict(ticker_symbol, ticker, info):
     """Build dictionary with all fields for template filling."""
+
+    history_cache = {}
+    periods_technical = [("1mo", "1M"), ("3mo", "3M"), ("6mo", "6M"), ("1y", "1Y")]
+    periods_ratios = [1, 3, 5, 10]
+
+    for period_str, _ in periods_technical:
+        try:
+            history_cache[period_str] = ticker.history(period=period_str)
+        except Exception as e:
+            print(f"Error fetching history for {period_str}: {e}")
+            history_cache[period_str] = pd.DataFrame() # Store empty DataFrame on error
+            
+    for years_int in periods_ratios:
+        period_str = f"{years_int}y"
+        try:
+            history_cache[period_str] = ticker.history(period=period_str)
+        except Exception as e:
+            print(f"Error fetching history for {period_str}: {e}")
+            history_cache[period_str] = pd.DataFrame() # Store empty DataFrame on error
     
     # Calculate some derived fields
     current_price = safe_get(info, "currentPrice", 0)
@@ -653,14 +675,14 @@ def build_data_dict(ticker_symbol, ticker, info):
         "UPSIDE_DOWNSIDE": safe_get(info, "targetMeanPrice", "N/A"),
         
         # === Sharpe & Sortino Ratios ===
-        "SHARPE_RATIO_1Y": calculate_sharpe_ratio(ticker, 1),
-        "SHARPE_RATIO_3Y": calculate_sharpe_ratio(ticker, 3),
-        "SHARPE_RATIO_5Y": calculate_sharpe_ratio(ticker, 5),
-        "SHARPE_RATIO_10Y": calculate_sharpe_ratio(ticker, 10),
-        "SORTINO_RATIO_1Y": calculate_sortino_ratio(ticker, 1),
-        "SORTINO_RATIO_3Y": calculate_sortino_ratio(ticker, 3),
-        "SORTINO_RATIO_5Y": calculate_sortino_ratio(ticker, 5),
-        "SORTINO_RATIO_10Y": calculate_sortino_ratio(ticker, 10),
+        "SHARPE_RATIO_1Y": calculate_sharpe_ratio(ticker_symbol, history_cache, 1),
+        "SHARPE_RATIO_3Y": calculate_sharpe_ratio(ticker_symbol, history_cache, 3),
+        "SHARPE_RATIO_5Y": calculate_sharpe_ratio(ticker_symbol, history_cache, 5),
+        "SHARPE_RATIO_10Y": calculate_sharpe_ratio(ticker_symbol, history_cache, 10),
+        "SORTINO_RATIO_1Y": calculate_sortino_ratio(ticker_symbol, history_cache, 1),
+        "SORTINO_RATIO_3Y": calculate_sortino_ratio(ticker_symbol, history_cache, 3),
+        "SORTINO_RATIO_5Y": calculate_sortino_ratio(ticker_symbol, history_cache, 5),
+        "SORTINO_RATIO_10Y": calculate_sortino_ratio(ticker_symbol, history_cache, 10),
         
         # === Executive Management ===
         "CEO_NAME": "N/A", "CEO_SALARY": "N/A",
@@ -676,7 +698,7 @@ def build_data_dict(ticker_symbol, ticker, info):
     }
     
     # Merge technical analysis data
-    data.update(build_technical_section(ticker))
+    data.update(build_technical_section(ticker_symbol, history_cache))
     
     # Merge computed debt metrics
     data.update(compute_debt_metrics(info))
