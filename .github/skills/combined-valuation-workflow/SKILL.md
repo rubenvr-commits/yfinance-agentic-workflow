@@ -137,17 +137,17 @@ Analiza AAPL y dame tu recomendación de inversión
 [PARALELO] Ejecutando investigación técnica e investigación web en paralelo...
   [A] Generando informe técnico (yfinance) para AAPL...
   [B] Generando investigación web (Tavily) para AAPL...
-  ✓ Informe técnico generado
-  ✓ Investigación web y fundamentales generados
+  OK Informe técnico generado
+  OK Investigación web y fundamentales generados
 
-✅ Investigación técnica y web completadas
+COMPLETADO Investigación técnica y web completadas
 
   [C] Generando análisis Berkshire para AAPL...
-  ✓ Análisis Berkshire generado
+  OK Análisis Berkshire generado
 
-✅ Workflow completado exitosamente para AAPL
+COMPLETADO Workflow completado exitosamente para AAPL
 
-📄 Archivos generados:
+Archivos generados: Archivos generados:
    • Informe técnico (yfinance): .../evaluaciones/AAPL/informe-tecnico.md
    • Investigación web JSON (Tavily): .../evaluaciones/AAPL/raw-search/web-search.json
    • Informe de fundamentales (web): .../evaluaciones/AAPL/informe-fundamentales.md

@@ -22,15 +22,15 @@ def check_files_exist(ticker: str, workspace_root: Path) -> bool:
     
     print(f"  Checking yfinance report: {yfinance_file}")
     if not yfinance_file.exists():
-        print(f"    ❌ File not found")
+        print(f"    ERROR File not found")
         return False
-    print(f"    ✓ Exists ({yfinance_file.stat().st_size} bytes)")
+    print(f"    OK Exists ({yfinance_file.stat().st_size} bytes)")
     
     print(f"  Checking Berkshire report: {berkshire_file}")
     if not berkshire_file.exists():
-        print(f"    ❌ File not found")
+        print(f"    ERROR File not found")
         return False
-    print(f"    ✓ Exists ({berkshire_file.stat().st_size} bytes)")
+    print(f"    OK Exists ({berkshire_file.stat().st_size} bytes)")
     
     return True
 
@@ -47,7 +47,7 @@ def check_file_content(ticker: str, workspace_root: Path) -> bool:
             content = f.read()
         
         if not content:
-            print(f"    ❌ File is empty")
+            print(f"    ERROR File is empty")
             return False
         
         # Verificar que contiene secciones esperadas
@@ -55,11 +55,11 @@ def check_file_content(ticker: str, workspace_root: Path) -> bool:
         missing = [s for s in required_sections if s not in content]
         
         if missing:
-            print(f"    ⚠️  Missing expected sections: {missing}")
+            print(f"    ADVERTENCIA  Missing expected sections: {missing}")
         else:
-            print(f"    ✓ Contains expected financial data")
+            print(f"    OK Contains expected financial data")
     except Exception as e:
-        print(f"    ❌ Error reading file: {e}")
+        print(f"    ERROR Error reading file: {e}")
         return False
     
     # Verificar contenido de Berkshire
@@ -69,16 +69,16 @@ def check_file_content(ticker: str, workspace_root: Path) -> bool:
             content = f.read()
         
         if not content:
-            print(f"    ❌ File is empty")
+            print(f"    ERROR File is empty")
             return False
         
         # Verificar que tiene contenido (al menos más que un párrafo)
         if len(content) < 200:
-            print(f"    ⚠️  File is very short ({len(content)} bytes)")
+            print(f"    ADVERTENCIA  File is very short ({len(content)} bytes)")
         else:
-            print(f"    ✓ Contains substantial content ({len(content)} bytes)")
+            print(f"    OK Contains substantial content ({len(content)} bytes)")
     except Exception as e:
-        print(f"    ❌ Error reading file: {e}")
+        print(f"    ERROR Error reading file: {e}")
         return False
     
     return True

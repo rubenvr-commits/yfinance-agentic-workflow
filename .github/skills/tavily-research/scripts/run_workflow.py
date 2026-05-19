@@ -112,7 +112,7 @@ def call_tavily_research(ticker: str, company_name: Optional[str], sector: Optio
         # Wait for file to be created (max 30 seconds)
         for attempt in range(30):
             if output_path.exists():
-                print(f"   ✓ Research completed: {output_path}")
+                print(f"   OK Research completed: {output_path}")
                 return True, str(output_path)
             time.sleep(1)
         
@@ -159,7 +159,7 @@ def call_web_search_fundamentales(json_path: str) -> Tuple[bool, str]:
         # Verify markdown was created
         for attempt in range(10):
             if md_path.exists():
-                print(f"   ✓ Fundamentals report generated: {md_path}")
+                print(f"   OK Fundamentals report generated: {md_path}")
                 return True, str(md_path)
             time.sleep(0.5)
         
@@ -194,23 +194,23 @@ Examples:
     if args.from_natural:
         ticker = extract_ticker(args.from_natural)
         if not ticker:
-            print(f"❌ Could not extract valid ticker from: {args.from_natural}")
+            print(f"ERROR Could not extract valid ticker from: {args.from_natural}")
             return 1
     elif args.ticker:
         ticker = extract_ticker(args.ticker)
         if not ticker:
-            print(f"❌ Invalid ticker: {args.ticker}")
+            print(f"ERROR Invalid ticker: {args.ticker}")
             return 1
     else:
         parser.print_help()
         return 1
     
-    print(f"\n🔍 Starting research workflow for ticker: {ticker}\n")
+    print(f"\n Starting research workflow for ticker: {ticker}\n")
     
     # Step 1: Tavily Research
     success, result = call_tavily_research(ticker, args.company_name, args.sector)
     if not success:
-        print(f"❌ {result}")
+        print(f"ERROR {result}")
         return 1
     
     json_path = result
@@ -218,14 +218,14 @@ Examples:
     # Step 2: Web Search Fundamentales
     success, result = call_web_search_fundamentales(json_path)
     if not success:
-        print(f"❌ {result}")
+        print(f"ERROR {result}")
         return 1
     
     md_path = result
     
     # Success
-    print(f"\n✅ Workflow completed successfully for {ticker}")
-    print(f"\n📄 Generated files:")
+    print(f"\nCOMPLETADO Workflow completed successfully for {ticker}")
+    print(f"\nArchivos generados: Generated files:")
     print(f"   • Research JSON: {json_path}")
     print(f"   • Fundamentals Report: {md_path}")
     print()

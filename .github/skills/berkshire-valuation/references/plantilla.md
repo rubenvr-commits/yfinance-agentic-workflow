@@ -142,13 +142,13 @@ $$\text{Precio por Acción} = \frac{\$[X]B}{[X]B \text{ acciones}} = \$[X]$$
 
 | Criterio | Buffett Prefiere | [Empresa] | Veredicto |
 |----------|-----------------|--------|----------|
-| **[Criterio 1]** | [Estándar] | [Realidad] | ✅/⚠️/❌ |
-| **[Criterio 2]** | [Estándar] | [Realidad] | ✅/⚠️/❌ |
-| **[Criterio 3]** | [Estándar] | [Realidad] | ✅/⚠️/❌ |
-| **[Criterio 4]** | [Estándar] | [Realidad] | ✅/⚠️/❌ |
-| **[Criterio 5]** | [Estándar] | [Realidad] | ✅/⚠️/❌ |
-| **[Criterio 6]** | [Estándar] | [Realidad] | ✅/⚠️/❌ |
-| **[Criterio 7]** | [Estándar] | [Realidad] | ✅/⚠️/❌ |
+| **[Criterio 1]** | [Estándar] | [Realidad] | COMPLETADO/ADVERTENCIA/ERROR |
+| **[Criterio 2]** | [Estándar] | [Realidad] | COMPLETADO/ADVERTENCIA/ERROR |
+| **[Criterio 3]** | [Estándar] | [Realidad] | COMPLETADO/ADVERTENCIA/ERROR |
+| **[Criterio 4]** | [Estándar] | [Realidad] | COMPLETADO/ADVERTENCIA/ERROR |
+| **[Criterio 5]** | [Estándar] | [Realidad] | COMPLETADO/ADVERTENCIA/ERROR |
+| **[Criterio 6]** | [Estándar] | [Realidad] | COMPLETADO/ADVERTENCIA/ERROR |
+| **[Criterio 7]** | [Estándar] | [Realidad] | COMPLETADO/ADVERTENCIA/ERROR |
 
 ---
 

@@ -2,10 +2,10 @@
 applyTo: "**"
 ---
 
-# Regla: No usar emojis en archivos de instrucciones
+# Regla: No usar emojis en todo el repositorio
 
-## NUNCA uses emojis en instrucciones, reglas o archivos de configuración relacionados con las instrucciones.
+## NUNCA uses emojis en ningún archivo del repositorio.
 
-- Los archivos de instrucciones deben mantenerse en texto claro y profesional.
-- Si un archivo de instrucciones contiene emojis, debes eliminarlos antes de guardar.
-- Esta regla aplica a todos los archivos del proyecto, sin excepción.
+- Todos los archivos deben mantenerse en texto claro y profesional.
+- Si un archivo contiene emojis, debes eliminarlos antes de guardar.
+- Esta regla aplica a todo el repositorio, sin excepción.
