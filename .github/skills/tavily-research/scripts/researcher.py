@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Tavily Research Skill - Investigates a financial asset using MCP Tavily tools
+Tavily Research Skill - Investigates a financial asset using Tavily API
 
 This script researches a company across 4 dimensions:
 1. Long-term vision and strategic direction
@@ -20,7 +20,7 @@ import logging
 
 # Add scripts directory to path for utils import
 sys.path.insert(0, str(Path(__file__).parent))
-from utils import MCPTavilyClient
+from utils import TavilyAPIClient
 
 
 logging.basicConfig(
@@ -30,9 +30,9 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-class TavilyResearcherMCP:
+class TavilyResearcherAPI:
     """
-    Conducts structured research on financial assets using MCP Tavily tools.
+    Conducts structured research on financial assets using Tavily API.
     """
     
     def __init__(self, ticker: str, company_name: str = None, sector: str = None, output_dir: str = None):
@@ -60,8 +60,8 @@ class TavilyResearcherMCP:
         self.output_dir = Path(output_dir)
         self.output_file = self.output_dir / "web-search.json"
         
-        # Initialize MCP client
-        self.client = MCPTavilyClient()
+        # Initialize API client
+        self.client = TavilyAPIClient()
         
         # Results container
         self.all_results = {}
@@ -77,7 +77,7 @@ class TavilyResearcherMCP:
         """
         try:
             print(f"\n{'='*70}")
-            print(f"Tavily Research (MCP) - {self.company_name} ({self.ticker})")
+            print(f"Tavily Research (API) - {self.company_name} ({self.ticker})")
             print(f"{'='*70}\n")
             
             # Define search queries for each criterion
@@ -163,8 +163,8 @@ class TavilyResearcherMCP:
             print(f"  [*] Searching for {criterion}...")
             print(f"      Query: {broad_query[:70]}...")
             
-            # Attempt broad query
-            search_result = self.client.search_criterion(broad_query, max_results=3)
+            # Attempt broad query with advanced search depth
+            search_result = self.client.search_criterion(broad_query, max_results=3, search_depth="advanced")
             
             if search_result.get("results") and len(search_result["results"]) >= 1:
                 result["results"] = search_result["results"]
@@ -177,7 +177,7 @@ class TavilyResearcherMCP:
                 
                 for focused_query in focused_queries:
                     print(f"      Query: {focused_query[:70]}...")
-                    focused_result = self.client.search_criterion(focused_query, max_results=3)
+                    focused_result = self.client.search_criterion(focused_query, max_results=3, search_depth="basic")
                     
                     if focused_result.get("results"):
                         result["results"].extend(focused_result["results"])
@@ -265,7 +265,7 @@ class TavilyResearcherMCP:
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
-        description="Research a financial asset using Tavily MCP tools",
+        description="Research a financial asset using Tavily API",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -296,7 +296,7 @@ Examples:
     args = parser.parse_args()
     
     # Create and run researcher
-    researcher = TavilyResearcherMCP(
+    researcher = TavilyResearcherAPI(
         ticker=args.ticker,
         company_name=args.company_name,
         sector=args.sector,
