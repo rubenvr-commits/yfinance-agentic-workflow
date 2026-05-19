@@ -1,0 +1,50 @@
+#!/bin/bash
+# Pre-commit hook: Validate code quality before committing
+# Install: cp .github/scripts/git-pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+
+set -e
+
+STAGED_FILES=$(git diff --cached --name-only)
+PY_FILES=$(echo "$STAGED_FILES" | grep '\.py$' | grep -v '__pycache__' | grep -v '^tests/' | grep -v '^\.github/scripts/' || true)
+
+if [ -z "$PY_FILES" ]; then
+    exit 0
+fi
+
+echo "Pre-commit validation..."
+echo "Python files to commit: $(echo $PY_FILES | wc -w)"
+
+# Check for missing test files
+MISSING_TESTS=()
+for py_file in $PY_FILES; do
+    # Skip infrastructure scripts (validators, runners, test utilities)
+    # Extract just the filename to check patterns
+    filename=$(basename "$py_file")
+    if [[ "$filename" =~ ^test_ || "$filename" =~ _test\.py$ || "$filename" =~ ^validate_ || "$filename" =~ ^run_ ]]; then
+        continue
+    fi
+    
+    # Check common test file locations
+    if [ ! -f "tests/test_$(basename $py_file)" ] && \
+       [ ! -f "__tests__/$(basename $py_file .py).test.py" ] && \
+       [ ! -f "$(dirname $py_file)/test_$(basename $py_file)" ] && \
+       [ ! -f "$(dirname $py_file)/$(basename $py_file .py)_test.py" ]; then
+        MISSING_TESTS+=("$py_file")
+    fi
+done
+
+if [ ${#MISSING_TESTS[@]} -gt 0 ]; then
+    echo ""
+    echo "WARNING: No test files found for:"
+    printf '  - %s\n' "${MISSING_TESTS[@]}"
+    echo ""
+    echo "It's recommended to create tests before committing."
+    echo "Continue? (y/n)"
+    read -r response
+    if [[ ! "$response" =~ ^[Yy]$ ]]; then
+        echo "Commit aborted."
+        exit 1
+    fi
+fi
+
+exit 0
