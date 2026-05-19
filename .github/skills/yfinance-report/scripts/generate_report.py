@@ -504,27 +504,52 @@ def fetch_ticker_data(ticker_symbol):
         return None
 
 
+def _fetch_history_cache(ticker):
+    """
+    Fetch and cache historical price data for all required periods.
+    
+    Periods fetched: 1mo, 3mo, 6mo, 1y (for technical analysis)
+                    3y, 5y, 10y (for ratio calculations)
+    
+    The cache avoids duplicate ticker.history() calls by fetching each period once.
+    
+    Args:
+        ticker: yfinance Ticker object
+    
+    Returns:
+        Dict with period strings as keys (e.g., "1y", "3y") and DataFrames as values.
+        Returns empty dict on complete failure.
+    """
+    history_cache = {}
+    
+    # Periods needed for technical analysis (short-term)
+    technical_periods = ["1mo", "3mo", "6mo", "1y"]
+    
+    # Additional periods needed for ratio calculations (medium/long-term)
+    ratio_periods = ["3y", "5y", "10y"]
+    
+    # Combine all periods, avoiding duplicates
+    all_periods = list(dict.fromkeys(technical_periods + ratio_periods))
+    
+    for period_str in all_periods:
+        try:
+            history_cache[period_str] = ticker.history(period=period_str)
+        except Exception as e:
+            print(f"Error fetching history for {period_str}: {e}")
+            history_cache[period_str] = pd.DataFrame()
+    
+    return history_cache
+
+
 def build_data_dict(ticker_symbol, ticker, info):
     """Build dictionary with all fields for template filling."""
 
-    history_cache = {}
-    periods_technical = [("1mo", "1M"), ("3mo", "3M"), ("6mo", "6M"), ("1y", "1Y")]
-    periods_ratios = [1, 3, 5, 10]
-
-    for period_str, _ in periods_technical:
-        try:
-            history_cache[period_str] = ticker.history(period=period_str)
-        except Exception as e:
-            print(f"Error fetching history for {period_str}: {e}")
-            history_cache[period_str] = pd.DataFrame() # Store empty DataFrame on error
-            
-    for years_int in periods_ratios:
-        period_str = f"{years_int}y"
-        try:
-            history_cache[period_str] = ticker.history(period=period_str)
-        except Exception as e:
-            print(f"Error fetching history for {period_str}: {e}")
-            history_cache[period_str] = pd.DataFrame() # Store empty DataFrame on error
+    # Fetch and cache historical data to avoid duplicate ticker.history() calls
+    history_cache = _fetch_history_cache(ticker)
+    
+    if not history_cache:
+        print(f"Warning: No history data available for {ticker_symbol}")
+        history_cache = {}
     
     # Calculate some derived fields
     current_price = safe_get(info, "currentPrice", 0)
