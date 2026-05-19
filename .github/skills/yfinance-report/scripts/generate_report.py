@@ -460,9 +460,9 @@ def build_data_dict(ticker_symbol, ticker, info):
         "EPS_GROWTH_FORWARD": safe_get(info, "epsForward", "N/A"),
         
         # === Shareholder Info ===
-        "INSIDERS_PERCENT_HELD": safe_get(info, "insidersPercent", "N/A"),
-        "INSTITUTIONS_PERCENT_HELD": safe_get(info, "institutionsPercent", "N/A"),
-        "PERCENT_HELD_BY_INSIDERS": safe_get(info, "insidersPercent", "N/A"),
+        "INSIDERS_PERCENT_HELD": format_percentage(safe_get(info, "heldPercentInsiders")),
+        "INSTITUTIONS_PERCENT_HELD": format_percentage(safe_get(info, "heldPercentInstitutions")),
+        "PERCENT_HELD_BY_INSIDERS": format_percentage(safe_get(info, "heldPercentInsiders")),
         
         # === Short ===
         "SHARES_SHORT": format_large_number(safe_get(info, "sharesShort")),
