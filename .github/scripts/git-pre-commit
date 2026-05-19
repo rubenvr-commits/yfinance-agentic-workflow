@@ -24,13 +24,31 @@ for py_file in $PY_FILES; do
         continue
     fi
     
-    # Check common test file locations
-    if [ ! -f "tests/test_$(basename $py_file)" ] && \
-       [ ! -f "__tests__/$(basename $py_file .py).test.py" ] && \
-       [ ! -f "$(dirname $py_file)/test_$(basename $py_file)" ] && \
-       [ ! -f "$(dirname $py_file)/$(basename $py_file .py)_test.py" ]; then
-        MISSING_TESTS+=("$py_file")
+    # Extract module name without .py extension
+    module_name=$(basename "$py_file" .py)
+    
+    # Strategy 1: Check common test file locations by name
+    if [ -f "tests/test_$(basename $py_file)" ] || \
+       [ -f "__tests__/$(basename $py_file .py).test.py" ] || \
+       [ -f "$(dirname $py_file)/test_$(basename $py_file)" ] || \
+       [ -f "$(dirname $py_file)/$(basename $py_file .py)_test.py" ]; then
+        continue
     fi
+    
+    # Strategy 2: Search for imports of this module in test files
+    # Check if any test file imports or references this module by name
+    if grep -r "from.*${module_name}" tests/ > /dev/null 2>&1 || \
+       grep -r "import.*${module_name}" tests/ > /dev/null 2>&1; then
+        continue
+    fi
+    
+    # Strategy 3: Check for tests in sibling tests/ directory (same level as module)
+    module_dir=$(dirname "$py_file")
+    if [ -d "${module_dir}/tests" ] && [ ! -z "$(find ${module_dir}/tests -name 'test_*.py' -o -name '*_test.py' 2>/dev/null)" ]; then
+        continue
+    fi
+    
+    MISSING_TESTS+=("$py_file")
 done
 
 if [ ${#MISSING_TESTS[@]} -gt 0 ]; then

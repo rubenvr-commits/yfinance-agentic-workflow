@@ -1,12 +1,12 @@
 ---
 name: tavily-research
-description: "Research a financial asset across four key dimensions using Tavily MCP tools: long-term vision, corporate values, competitive advantages, and critical management decisions. Trigger on user requests like 'investigar', 'analizar', 'buscar info', 'research ticker', 'analyze company', or when they mention a stock ticker and want comprehensive web research. Outputs structured JSON with investigation results to evaluaciones/{ticker}/raw-search/web-search.json. Uses MCP protocol (not API HTTP) for secure, efficient search integration."
-compatibility: "Python 3.8+, mcp SDK, npx (for tavily-mcp server)"
+description: "Research a financial asset across four key dimensions using Tavily API: long-term vision, corporate values, competitive advantages, and critical management decisions. Trigger on user requests like 'investigar', 'analizar', 'buscar info', 'research ticker', 'analyze company', or when they mention a stock ticker and want comprehensive web research. Outputs structured JSON with investigation results to evaluaciones/{ticker}/raw-search/web-search.json. Uses HTTP API for reliable, scalable search integration."
+compatibility: "Python 3.8+, requests library, TAVILY_API_KEY environment variable"
 ---
 
-# Tavily Research Skill (MCP)
+# Tavily Research Skill (API)
 
-Conduct structured financial research on any asset across four strategic dimensions using Tavily's advanced search capabilities through MCP protocol.
+Conduct structured financial research on any asset across four strategic dimensions using Tavily's advanced search capabilities through HTTP API.
 
 ## What This Skill Does
 
@@ -17,8 +17,8 @@ Conduct structured financial research on any asset across four strategic dimensi
    - **Critical decisions**: Management response to crises, strategic pivots, major business decisions
 
 2. **Executes intelligent search strategy:**
-   - Broad query first for comprehensive coverage
-   - Fallback to focused queries if broad search returns few results
+   - Broad query first for comprehensive coverage (using advanced search depth)
+   - Fallback to focused queries if broad search returns few results (using basic search depth)
    - Normalizes all results to consistent schema
 
 3. **Saves structured output:**
@@ -84,18 +84,18 @@ Trigger this skill when users ask to:
 
 ## How It Works
 
-### Step 1: Initialize MCP Client
-- Read `TAVILY_API_KEY` from the environment
-- Start tavily-mcp server via stdio (npx tavily-mcp@latest)
-- Establish secure connection to MCP server
+### Step 1: Initialize API Client
+- Read `TAVILY_API_KEY` from environment
+- Validate API key availability
+- Prepare HTTP headers for Tavily API requests
 
 ### Step 2: Define Search Queries
 - Create broad and focused queries for each of 4 dimensions
 - Tailor queries to company name, ticker, and sector context
 
 ### Step 3: Execute Searches
-- Broad query first via `tavily_research` tool (preferred, uses model="pro")
-- If results < 2, try focused queries as fallback
+- Broad query first via HTTP POST to Tavily API (search_depth="advanced")
+- If results < 2, try focused queries as fallback (search_depth="basic")
 - Continue until finding meaningful results or exhausting focused queries
 
 ### Step 4: Normalize Results
