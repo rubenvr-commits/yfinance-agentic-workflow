@@ -329,6 +329,50 @@ def build_swot_from_metrics(info, sector="sector desconocido", country="país de
     return result
 
 
+def extract_executives(info):
+    """
+    Extract executive names and salaries from companyOfficers.
+    
+    Args:
+        info: yfinance Ticker info dict
+    
+    Returns:
+        Dict with CEO_NAME, CEO_SALARY, CFO_NAME, CFO_SALARY, COO_NAME, COO_SALARY.
+    """
+    officers = info.get("companyOfficers", []) or []
+    
+    def find_officer(keyword):
+        for officer in officers:
+            title = str(officer.get("title", "")).lower()
+            if keyword.lower() in title:
+                return officer
+        return None
+    
+    def format_exec(officer):
+        if not officer:
+            return "N/A", "N/A"
+        name = officer.get("name", "N/A") or "N/A"
+        total_pay = officer.get("totalPay")
+        return name, format_currency(total_pay)
+    
+    ceo = find_officer("chief executive")
+    cfo = find_officer("chief financial")
+    coo = find_officer("chief operating")
+    
+    ceo_name, ceo_salary = format_exec(ceo)
+    cfo_name, cfo_salary = format_exec(cfo)
+    coo_name, coo_salary = format_exec(coo)
+    
+    return {
+        "CEO_NAME": ceo_name,
+        "CEO_SALARY": ceo_salary,
+        "CFO_NAME": cfo_name,
+        "CFO_SALARY": cfo_salary,
+        "COO_NAME": coo_name,
+        "COO_SALARY": coo_salary,
+    }
+
+
 def compute_debt_metrics(info):
     """
     Compute debt-related financial metrics.
@@ -618,7 +662,7 @@ def build_data_dict(ticker_symbol, ticker, info):
         "SORTINO_RATIO_5Y": calculate_sortino_ratio(ticker, 5),
         "SORTINO_RATIO_10Y": calculate_sortino_ratio(ticker, 10),
         
-        # === Executive Management (dummy) ===
+        # === Executive Management ===
         "CEO_NAME": "N/A", "CEO_SALARY": "N/A",
         "CFO_NAME": "N/A", "CFO_SALARY": "N/A",
         "COO_NAME": "N/A", "COO_SALARY": "N/A",
@@ -636,6 +680,9 @@ def build_data_dict(ticker_symbol, ticker, info):
     
     # Merge computed debt metrics
     data.update(compute_debt_metrics(info))
+    
+    # Merge executive officer data
+    data.update(extract_executives(info))
     
     # Merge SWOT analysis from metrics
     sector = safe_get(info, "sector", "sector desconocido")
