@@ -151,6 +151,58 @@ def calculate_sortino_ratio(ticker, years, risk_free_rate=0.02):
         return "N/A"
 
 
+def compute_debt_metrics(info):
+    """
+    Compute debt-related financial metrics.
+    
+    Args:
+        info: yfinance Ticker info dict
+    
+    Returns:
+        Dict with keys DEBT_TO_EBITDA and DEBT_TO_REVENUE, 
+        or "N/A" if computation fails
+    """
+    result = {}
+    
+    # DEBT_TO_EBITDA = totalDebt / ebitda
+    try:
+        total_debt = safe_get(info, "totalDebt")
+        ebitda = safe_get(info, "ebitda")
+        
+        if total_debt == "N/A" or ebitda == "N/A":
+            result["DEBT_TO_EBITDA"] = "N/A"
+        else:
+            total_debt_val = float(total_debt)
+            ebitda_val = float(ebitda)
+            
+            if total_debt_val == 0 or ebitda_val == 0:
+                result["DEBT_TO_EBITDA"] = "N/A"
+            else:
+                result["DEBT_TO_EBITDA"] = round(total_debt_val / ebitda_val, 2)
+    except (ValueError, TypeError, ZeroDivisionError):
+        result["DEBT_TO_EBITDA"] = "N/A"
+    
+    # DEBT_TO_REVENUE = totalDebt / totalRevenue
+    try:
+        total_debt = safe_get(info, "totalDebt")
+        total_revenue = safe_get(info, "totalRevenue")
+        
+        if total_debt == "N/A" or total_revenue == "N/A":
+            result["DEBT_TO_REVENUE"] = "N/A"
+        else:
+            total_debt_val = float(total_debt)
+            total_revenue_val = float(total_revenue)
+            
+            if total_debt_val == 0 or total_revenue_val == 0:
+                result["DEBT_TO_REVENUE"] = "N/A"
+            else:
+                result["DEBT_TO_REVENUE"] = round(total_debt_val / total_revenue_val, 2)
+    except (ValueError, TypeError, ZeroDivisionError):
+        result["DEBT_TO_REVENUE"] = "N/A"
+    
+    return result
+
+
 def build_technical_section(ticker):
     """
     Build technical analysis section with historical price data.
@@ -334,8 +386,6 @@ def build_data_dict(ticker_symbol, ticker, info):
         
         # === Financial Health ===
         "DEBT_TO_EQUITY": safe_get(info, "debtToEquity", "N/A"),
-        "DEBT_TO_EBITDA": safe_get(info, "debtToEquity", "N/A"),  # Fallback
-        "DEBT_TO_REVENUE": safe_get(info, "debtToEquity", "N/A"),  # Fallback
         "CURRENT_RATIO": safe_get(info, "currentRatio", "N/A"),
         "QUICK_RATIO": safe_get(info, "quickRatio", "N/A"),
         
@@ -418,6 +468,9 @@ def build_data_dict(ticker_symbol, ticker, info):
     
     # Merge technical analysis data
     data.update(build_technical_section(ticker))
+    
+    # Merge computed debt metrics
+    data.update(compute_debt_metrics(info))
     
     return data
 
