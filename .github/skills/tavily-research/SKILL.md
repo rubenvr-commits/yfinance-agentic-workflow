@@ -295,7 +295,7 @@ Archivos generados: Generated files:
 ### Integration with Other Skills
 
 After running this workflow, you can use the generated `informe-fundamentales.md` with:
-- **combined-valuation-workflow**: Feeds fundamentals into the complete valuation pipeline
+- **Analista Financiero (Agent)**: Feeds fundamentals into the complete valuation pipeline
 - **berkshire-valuation**: Provides web research context for Berkshire-based investment analysis
 
 ## Advanced Usage
@@ -306,7 +306,7 @@ Modify the `searches` dictionary in `researcher.py` to customize broad/focused q
 ### Integration with Other Skills
 This skill feeds data to downstream analysis skills:
 - **berkshire-valuation**: Use web-search.json results as input for Berkshire-based valuation
-- **combined-valuation-workflow**: Combines web research with yfinance and Berkshire analysis
+- **Analista Financiero (Agent)**: Combines web research with yfinance and Berkshire analysis
 
 ### Monitoring & Logs
 Enable debug logging:

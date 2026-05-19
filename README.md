@@ -18,7 +18,6 @@ Este repositorio reúne componentes para analizar empresas desde varias perspect
 El proyecto incluye varias skills instalables y reusables:
 
 - `.github/skills/berkshire-valuation/`
-- `.github/skills/combined-valuation-workflow/`
 - `.github/skills/frontend-design/`
 - `.github/skills/skill-creator/`
 - `.github/skills/tavily-research/`
@@ -124,12 +123,6 @@ python .github/skills/web-search-fundamentales/scripts/extract_fundamentales.py 
 python .github/skills/berkshire-valuation/scripts/notebooklm_client.py ask \
   --notebook-id 6904dc8b-742e-4192-82db-32e81e1f5e0f \
   --question "¿Cómo vería Buffett una empresa con este perfil financiero?"
-```
-
-### 5. Ejecutar el flujo combinado
-
-```bash
-python .github/skills/combined-valuation-workflow/scripts/run_workflow.py REP.MC
 ```
 
 ## Ejemplo de salida
