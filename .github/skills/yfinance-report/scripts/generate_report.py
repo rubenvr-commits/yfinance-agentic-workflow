@@ -151,6 +151,340 @@ def calculate_sortino_ratio(ticker, years, risk_free_rate=0.02):
         return "N/A"
 
 
+def calculate_revenue_cagr(ticker, years):
+    """
+    Calculate revenue compound annual growth rate (CAGR) from annual financials.
+    
+    Args:
+        ticker: yfinance Ticker object
+        years: Number of years to calculate CAGR over
+    
+    Returns:
+        Formatted percentage string, or "N/A" if calculation fails
+    """
+    try:
+        # Get annual income statement
+        financials = ticker.financials
+        
+        if financials is None or financials.empty:
+            return "N/A"
+        
+        # Find the revenue row (case-insensitive search)
+        revenue_row = None
+        for idx in financials.index:
+            if "revenue" in str(idx).lower():
+                revenue_row = financials.loc[idx]
+                break
+        
+        if revenue_row is None or revenue_row.empty:
+            return "N/A"
+        
+        # Sort columns descending (most recent first)
+        revenue_row = revenue_row.sort_index(ascending=False)
+        
+        # Filter out NaN values
+        revenue_row = revenue_row.dropna()
+        
+        # Need at least 2 data points and at least 1 year of data
+        if len(revenue_row) < 2:
+            return "N/A"
+        
+        # Calculate number of years available
+        available_years = len(revenue_row) - 1
+        n = min(years, available_years)
+        
+        if n < 1:
+            return "N/A"
+        
+        # Get most recent and past values
+        recent = float(revenue_row.iloc[0])
+        past = float(revenue_row.iloc[n])
+        
+        if recent <= 0 or past <= 0:
+            return "N/A"
+        
+        # Calculate CAGR: (recent / past) ** (1/n) - 1
+        cagr = (recent / past) ** (1 / n) - 1
+        
+        # Return formatted percentage
+        return format_percentage(cagr * 100)
+    
+    except Exception as e:
+        print(f"Error calculating revenue CAGR for {years}y: {e}")
+        return "N/A"
+
+
+def build_swot_from_metrics(info, sector="sector desconocido", country="país desconocido"):
+    """
+    Build SWOT analysis from actual financial metrics.
+    
+    Args:
+        info: yfinance Ticker info dict
+        sector: Company sector
+        country: Company country
+    
+    Returns:
+        Dict with STRENGTH_*, WEAKNESS_*, OPPORTUNITY_*, RISK_*, ANALYST_CONCLUSION keys
+    """
+    result = {}
+    
+    # Extract metrics safely
+    roe = safe_get(info, "returnOnEquity")
+    profit_margins = safe_get(info, "profitMargins")
+    debt_to_equity = safe_get(info, "debtToEquity")
+    fcf = safe_get(info, "freeCashflow")
+    current_ratio = safe_get(info, "currentRatio")
+    revenue_growth = safe_get(info, "revenueGrowth")
+    pe_ratio = safe_get(info, "trailingPE")
+    
+    # Convert to float safely
+    def to_float(val):
+        if val == "N/A":
+            return None
+        try:
+            return float(val)
+        except (ValueError, TypeError):
+            return None
+    
+    roe_val = to_float(roe)
+    profit_margins_val = to_float(profit_margins)
+    debt_to_equity_val = to_float(debt_to_equity)
+    fcf_val = to_float(fcf)
+    current_ratio_val = to_float(current_ratio)
+    revenue_growth_val = to_float(revenue_growth)
+    pe_val = to_float(pe_ratio)
+    
+    # Build Strengths (select best 3 from candidates)
+    strengths_candidates = []
+    
+    if roe_val is not None and roe_val > 0.15:
+        strengths_candidates.append(f"ROE del {roe_val:.1%}: genera valor sostenido para el accionista")
+    
+    if profit_margins_val is not None and profit_margins_val > 0.20:
+        strengths_candidates.append(f"Margen neto del {profit_margins_val:.1%}: poder de fijación de precios elevado")
+    
+    if debt_to_equity_val is not None and debt_to_equity_val < 1.0:
+        strengths_candidates.append(f"Balance saneado con ratio deuda/patrimonio de {debt_to_equity_val:.2f}")
+    
+    if fcf_val is not None and fcf_val > 0:
+        fcf_formatted = format_currency(fcf_val)
+        strengths_candidates.append(f"Generación de FCF de {fcf_formatted}")
+    
+    # Take best 3 strengths
+    for i in range(1, 4):
+        if i - 1 < len(strengths_candidates):
+            result[f"STRENGTH_{i}"] = strengths_candidates[i - 1]
+        else:
+            result[f"STRENGTH_{i}"] = "N/A"
+    
+    # Build Weaknesses (select worst up to 3)
+    weaknesses_candidates = []
+    
+    if current_ratio_val is not None and current_ratio_val < 1.0:
+        weaknesses_candidates.append(f"Razón circulante de {current_ratio_val:.2f}: posible presión de liquidez a corto plazo")
+    
+    if debt_to_equity_val is not None and debt_to_equity_val > 2.0:
+        weaknesses_candidates.append(f"Apalancamiento elevado: deuda/patrimonio de {debt_to_equity_val:.2f}")
+    
+    if revenue_growth_val is not None and revenue_growth_val < 0:
+        weaknesses_candidates.append(f"Contracción de ingresos YoY del {revenue_growth_val:.1%}")
+    
+    if profit_margins_val is not None and profit_margins_val < 0.05:
+        weaknesses_candidates.append(f"Márgenes netos ajustados del {profit_margins_val:.1%}")
+    
+    # Take up to 3 weaknesses
+    for i in range(1, 4):
+        if i - 1 < len(weaknesses_candidates):
+            result[f"WEAKNESS_{i}"] = weaknesses_candidates[i - 1]
+        else:
+            result[f"WEAKNESS_{i}"] = "N/A"
+    
+    # Opportunities (use sector and country info)
+    result["OPPORTUNITY_1"] = f"Expansión en mercados emergentes del sector {sector}"
+    result["OPPORTUNITY_2"] = "Tendencias de digitalización e IA aplicables al negocio"
+    
+    # Risks (use sector and country info)
+    result["RISK_1"] = f"Ciclos económicos y volatilidad de mercado en el sector {sector}"
+    result["RISK_2"] = f"Cambios regulatorios o geopolíticos que afecten a {country}"
+    
+    # Analyst Conclusion: summarize 3 most relevant metrics
+    conclusion_parts = []
+    
+    if pe_val is not None:
+        conclusion_parts.append(f"P/E de {pe_val:.2f}")
+    
+    if roe_val is not None:
+        conclusion_parts.append(f"ROE del {roe_val:.1%}")
+    
+    if fcf_val is not None:
+        fcf_formatted = format_currency(fcf_val)
+        conclusion_parts.append(f"FCF de {fcf_formatted}")
+    
+    if conclusion_parts:
+        metrics_summary = ", ".join(conclusion_parts)
+        result["ANALYST_CONCLUSION"] = f"Basado en datos financieros disponibles, con {metrics_summary}, la empresa presenta fundamentales apropiados para análisis posterior."
+    else:
+        result["ANALYST_CONCLUSION"] = "Basado en datos financieros disponibles, la empresa presenta fundamentales que requieren análisis posterior."
+    
+    return result
+
+
+def extract_executives(info):
+    """
+    Extract executive names and salaries from companyOfficers.
+    
+    Args:
+        info: yfinance Ticker info dict
+    
+    Returns:
+        Dict with CEO_NAME, CEO_SALARY, CFO_NAME, CFO_SALARY, COO_NAME, COO_SALARY.
+    """
+    officers = info.get("companyOfficers", []) or []
+    
+    def find_officer(keyword):
+        for officer in officers:
+            title = str(officer.get("title", "")).lower()
+            if keyword.lower() in title:
+                return officer
+        return None
+    
+    def format_exec(officer):
+        if not officer:
+            return "N/A", "N/A"
+        name = officer.get("name", "N/A") or "N/A"
+        total_pay = officer.get("totalPay")
+        return name, format_currency(total_pay)
+    
+    ceo = find_officer("chief executive")
+    cfo = find_officer("chief financial")
+    coo = find_officer("chief operating")
+    
+    ceo_name, ceo_salary = format_exec(ceo)
+    cfo_name, cfo_salary = format_exec(cfo)
+    coo_name, coo_salary = format_exec(coo)
+    
+    return {
+        "CEO_NAME": ceo_name,
+        "CEO_SALARY": ceo_salary,
+        "CFO_NAME": cfo_name,
+        "CFO_SALARY": cfo_salary,
+        "COO_NAME": coo_name,
+        "COO_SALARY": coo_salary,
+    }
+
+
+def compute_debt_metrics(info):
+    """
+    Compute debt-related financial metrics.
+    
+    Args:
+        info: yfinance Ticker info dict
+    
+    Returns:
+        Dict with keys DEBT_TO_EBITDA and DEBT_TO_REVENUE, 
+        or "N/A" if computation fails
+    """
+    result = {}
+    
+    # DEBT_TO_EBITDA = totalDebt / ebitda
+    try:
+        total_debt = safe_get(info, "totalDebt")
+        ebitda = safe_get(info, "ebitda")
+        
+        if total_debt == "N/A" or ebitda == "N/A":
+            result["DEBT_TO_EBITDA"] = "N/A"
+        else:
+            total_debt_val = float(total_debt)
+            ebitda_val = float(ebitda)
+            
+            if total_debt_val == 0 or ebitda_val == 0:
+                result["DEBT_TO_EBITDA"] = "N/A"
+            else:
+                result["DEBT_TO_EBITDA"] = round(total_debt_val / ebitda_val, 2)
+    except (ValueError, TypeError, ZeroDivisionError):
+        result["DEBT_TO_EBITDA"] = "N/A"
+    
+    # DEBT_TO_REVENUE = totalDebt / totalRevenue
+    try:
+        total_debt = safe_get(info, "totalDebt")
+        total_revenue = safe_get(info, "totalRevenue")
+        
+        if total_debt == "N/A" or total_revenue == "N/A":
+            result["DEBT_TO_REVENUE"] = "N/A"
+        else:
+            total_debt_val = float(total_debt)
+            total_revenue_val = float(total_revenue)
+            
+            if total_debt_val == 0 or total_revenue_val == 0:
+                result["DEBT_TO_REVENUE"] = "N/A"
+            else:
+                result["DEBT_TO_REVENUE"] = round(total_debt_val / total_revenue_val, 2)
+    except (ValueError, TypeError, ZeroDivisionError):
+        result["DEBT_TO_REVENUE"] = "N/A"
+    
+    return result
+
+
+def build_technical_section(ticker):
+    """
+    Build technical analysis section with historical price data.
+    
+    Args:
+        ticker: yfinance Ticker object
+    
+    Returns:
+        Dict with keys OPEN_{period}, CLOSE_{period}, HIGH_{period}, LOW_{period}, 
+        CHANGE_{period}, AVG_VOL_{period} for periods 1M, 3M, 6M, 1Y
+    """
+    result = {}
+    periods = [("1mo", "1M"), ("3mo", "3M"), ("6mo", "6M"), ("1y", "1Y")]
+    
+    for period, suffix in periods:
+        try:
+            hist = ticker.history(period=period)
+            
+            if hist.empty or len(hist) == 0:
+                result[f"OPEN_{suffix}"] = "N/A"
+                result[f"CLOSE_{suffix}"] = "N/A"
+                result[f"HIGH_{suffix}"] = "N/A"
+                result[f"LOW_{suffix}"] = "N/A"
+                result[f"CHANGE_{suffix}"] = "N/A"
+                result[f"AVG_VOL_{suffix}"] = "N/A"
+                continue
+            
+            # Extract values
+            open_price = hist["Open"].iloc[0]
+            close_price = hist["Close"].iloc[-1]
+            high_price = hist["High"].max()
+            low_price = hist["Low"].min()
+            avg_volume = hist["Volume"].mean()
+            
+            # Calculate percentage change
+            if open_price != 0:
+                change_pct = ((close_price - open_price) / open_price) * 100
+            else:
+                change_pct = 0
+            
+            # Format and store
+            result[f"OPEN_{suffix}"] = format_currency(open_price)
+            result[f"CLOSE_{suffix}"] = format_currency(close_price)
+            result[f"HIGH_{suffix}"] = format_currency(high_price)
+            result[f"LOW_{suffix}"] = format_currency(low_price)
+            result[f"CHANGE_{suffix}"] = format_percentage(change_pct)
+            result[f"AVG_VOL_{suffix}"] = format_large_number(avg_volume)
+            
+        except Exception as e:
+            print(f"Error processing {period} history: {e}")
+            result[f"OPEN_{suffix}"] = "N/A"
+            result[f"CLOSE_{suffix}"] = "N/A"
+            result[f"HIGH_{suffix}"] = "N/A"
+            result[f"LOW_{suffix}"] = "N/A"
+            result[f"CHANGE_{suffix}"] = "N/A"
+            result[f"AVG_VOL_{suffix}"] = "N/A"
+    
+    return result
+
+
 def fetch_ticker_data(ticker_symbol):
     """Fetch financial data from yfinance."""
     try:
@@ -274,22 +608,20 @@ def build_data_dict(ticker_symbol, ticker, info):
         
         # === Financial Health ===
         "DEBT_TO_EQUITY": safe_get(info, "debtToEquity", "N/A"),
-        "DEBT_TO_EBITDA": safe_get(info, "debtToEquity", "N/A"),  # Fallback
-        "DEBT_TO_REVENUE": safe_get(info, "debtToEquity", "N/A"),  # Fallback
         "CURRENT_RATIO": safe_get(info, "currentRatio", "N/A"),
         "QUICK_RATIO": safe_get(info, "quickRatio", "N/A"),
         
         # === Growth ===
-        "REVENUE_GROWTH_5Y": safe_get(info, "revenuePerShare", "N/A"),
-        "REVENUE_GROWTH_3Y": safe_get(info, "revenuePerShare", "N/A"),
+        "REVENUE_GROWTH_5Y": calculate_revenue_cagr(ticker, 5),
+        "REVENUE_GROWTH_3Y": calculate_revenue_cagr(ticker, 3),
         "EARNINGS_GROWTH_YOY": safe_get(info, "earningsGrowth", "N/A"),
         "FORWARD_REVENUE_GROWTH": safe_get(info, "revenueGrowth", "N/A"),
         "EPS_GROWTH_FORWARD": safe_get(info, "epsForward", "N/A"),
         
         # === Shareholder Info ===
-        "INSIDERS_PERCENT_HELD": safe_get(info, "insidersPercent", "N/A"),
-        "INSTITUTIONS_PERCENT_HELD": safe_get(info, "institutionsPercent", "N/A"),
-        "PERCENT_HELD_BY_INSIDERS": safe_get(info, "insidersPercent", "N/A"),
+        "INSIDERS_PERCENT_HELD": format_percentage(safe_get(info, "heldPercentInsiders")),
+        "INSTITUTIONS_PERCENT_HELD": format_percentage(safe_get(info, "heldPercentInstitutions")),
+        "PERCENT_HELD_BY_INSIDERS": format_percentage(safe_get(info, "heldPercentInsiders")),
         
         # === Short ===
         "SHARES_SHORT": format_large_number(safe_get(info, "sharesShort")),
@@ -300,12 +632,6 @@ def build_data_dict(ticker_symbol, ticker, info):
         "SELECTED_EXPIRY": "N/A",
         "STRIKE_1": "N/A", "BID_1": "N/A", "ASK_1": "N/A", "VOL_1": "N/A", "IV_1": "N/A", "DELTA_1": "N/A", "THETA_1": "N/A",
         "STRIKE_2": "N/A", "BID_2": "N/A", "ASK_2": "N/A", "VOL_2": "N/A", "IV_2": "N/A", "DELTA_2": "N/A", "THETA_2": "N/A",
-        
-        # === Technical Analysis (dummy) ===
-        "OPEN_1M": "N/A", "CLOSE_1M": "N/A", "HIGH_1M": "N/A", "LOW_1M": "N/A", "CHANGE_1M": "N/A", "AVG_VOL_1M": "N/A",
-        "OPEN_3M": "N/A", "CLOSE_3M": "N/A", "HIGH_3M": "N/A", "LOW_3M": "N/A", "CHANGE_3M": "N/A", "AVG_VOL_3M": "N/A",
-        "OPEN_6M": "N/A", "CLOSE_6M": "N/A", "HIGH_6M": "N/A", "LOW_6M": "N/A", "CHANGE_6M": "N/A", "AVG_VOL_6M": "N/A",
-        "OPEN_1Y": "N/A", "CLOSE_1Y": "N/A", "HIGH_1Y": "N/A", "LOW_1Y": "N/A", "CHANGE_1Y": "N/A", "AVG_VOL_1Y": "N/A",
         
         # === Corporate Events (dummy) ===
         "EARNINGS_DATE_1": "N/A", "EARNINGS_DESC_1": "N/A",
@@ -336,23 +662,10 @@ def build_data_dict(ticker_symbol, ticker, info):
         "SORTINO_RATIO_5Y": calculate_sortino_ratio(ticker, 5),
         "SORTINO_RATIO_10Y": calculate_sortino_ratio(ticker, 10),
         
-        # === Executive Management (dummy) ===
+        # === Executive Management ===
         "CEO_NAME": "N/A", "CEO_SALARY": "N/A",
         "CFO_NAME": "N/A", "CFO_SALARY": "N/A",
         "COO_NAME": "N/A", "COO_SALARY": "N/A",
-        
-        # === SWOT (dummy) ===
-        "STRENGTH_1": "Strong market position and brand recognition",
-        "STRENGTH_2": "Diverse product portfolio and revenue streams",
-        "STRENGTH_3": "Solid financial performance and cash generation",
-        "WEAKNESS_1": "Competition from emerging players",
-        "WEAKNESS_2": "Dependence on key markets",
-        "WEAKNESS_3": "Potential regulatory risks",
-        "OPPORTUNITY_1": "Expansion into new markets and segments",
-        "OPPORTUNITY_2": "Technology innovation and digital transformation",
-        "RISK_1": "Economic cycles and market volatility",
-        "RISK_2": "Regulatory and geopolitical changes",
-        "ANALYST_CONCLUSION": "Based on available financial data, this company shows stable fundamentals with growth potential. Further analysis recommended.",
         
         # === Splits (dummy) ===
         "SPLIT_DATE_1": "N/A", "SPLIT_RATIO_1": "N/A",
@@ -361,6 +674,20 @@ def build_data_dict(ticker_symbol, ticker, info):
         # === Footer ===
         "LAST_UPDATE": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     }
+    
+    # Merge technical analysis data
+    data.update(build_technical_section(ticker))
+    
+    # Merge computed debt metrics
+    data.update(compute_debt_metrics(info))
+    
+    # Merge executive officer data
+    data.update(extract_executives(info))
+    
+    # Merge SWOT analysis from metrics
+    sector = safe_get(info, "sector", "sector desconocido")
+    country = safe_get(info, "country", "país desconocido")
+    data.update(build_swot_from_metrics(info, sector, country))
     
     return data
 
