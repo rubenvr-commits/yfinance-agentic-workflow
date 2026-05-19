@@ -151,6 +151,69 @@ def calculate_sortino_ratio(ticker, years, risk_free_rate=0.02):
         return "N/A"
 
 
+def calculate_revenue_cagr(ticker, years):
+    """
+    Calculate revenue compound annual growth rate (CAGR) from annual financials.
+    
+    Args:
+        ticker: yfinance Ticker object
+        years: Number of years to calculate CAGR over
+    
+    Returns:
+        Formatted percentage string, or "N/A" if calculation fails
+    """
+    try:
+        # Get annual income statement
+        financials = ticker.financials
+        
+        if financials is None or financials.empty:
+            return "N/A"
+        
+        # Find the revenue row (case-insensitive search)
+        revenue_row = None
+        for idx in financials.index:
+            if "revenue" in str(idx).lower():
+                revenue_row = financials.loc[idx]
+                break
+        
+        if revenue_row is None or revenue_row.empty:
+            return "N/A"
+        
+        # Sort columns descending (most recent first)
+        revenue_row = revenue_row.sort_index(ascending=False)
+        
+        # Filter out NaN values
+        revenue_row = revenue_row.dropna()
+        
+        # Need at least 2 data points and at least 1 year of data
+        if len(revenue_row) < 2:
+            return "N/A"
+        
+        # Calculate number of years available
+        available_years = len(revenue_row) - 1
+        n = min(years, available_years)
+        
+        if n < 1:
+            return "N/A"
+        
+        # Get most recent and past values
+        recent = float(revenue_row.iloc[0])
+        past = float(revenue_row.iloc[n])
+        
+        if recent <= 0 or past <= 0:
+            return "N/A"
+        
+        # Calculate CAGR: (recent / past) ** (1/n) - 1
+        cagr = (recent / past) ** (1 / n) - 1
+        
+        # Return formatted percentage
+        return format_percentage(cagr * 100)
+    
+    except Exception as e:
+        print(f"Error calculating revenue CAGR for {years}y: {e}")
+        return "N/A"
+
+
 def compute_debt_metrics(info):
     """
     Compute debt-related financial metrics.
@@ -390,8 +453,8 @@ def build_data_dict(ticker_symbol, ticker, info):
         "QUICK_RATIO": safe_get(info, "quickRatio", "N/A"),
         
         # === Growth ===
-        "REVENUE_GROWTH_5Y": safe_get(info, "revenuePerShare", "N/A"),
-        "REVENUE_GROWTH_3Y": safe_get(info, "revenuePerShare", "N/A"),
+        "REVENUE_GROWTH_5Y": calculate_revenue_cagr(ticker, 5),
+        "REVENUE_GROWTH_3Y": calculate_revenue_cagr(ticker, 3),
         "EARNINGS_GROWTH_YOY": safe_get(info, "earningsGrowth", "N/A"),
         "FORWARD_REVENUE_GROWTH": safe_get(info, "revenueGrowth", "N/A"),
         "EPS_GROWTH_FORWARD": safe_get(info, "epsForward", "N/A"),
