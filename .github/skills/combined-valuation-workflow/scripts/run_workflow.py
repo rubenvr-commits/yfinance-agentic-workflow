@@ -111,7 +111,7 @@ def call_yfinance_report(ticker: str) -> Tuple[bool, str]:
         # Esperar a que se cree el archivo (máx 30 segundos)
         for attempt in range(30):
             if output_path.exists():
-                print(f"      ✓ Informe técnico generado")
+                print(f"      OK Informe técnico generado")
                 return True, str(output_path)
             time.sleep(1)
         
@@ -152,7 +152,7 @@ def call_tavily_research_and_fundamentales(ticker: str) -> Tuple[bool, str, str]
         # Esperar a que se creen ambos archivos (máx 30 segundos)
         for attempt in range(30):
             if json_output_path.exists() and md_output_path.exists():
-                print(f"      ✓ Investigación web y fundamentales generados")
+                print(f"      OK Investigación web y fundamentales generados")
                 return True, str(json_output_path), str(md_output_path)
             time.sleep(1)
         
@@ -196,7 +196,7 @@ def call_berkshire_valuation(ticker: str, yfinance_path: str, fundamentales_path
             with open(fundamentales_path, 'r', encoding='utf-8') as f:
                 fundamentales_content = f.read()
         except Exception as e:
-            print(f"   ⚠️  Advertencia: No se pudo leer informe de fundamentales: {e}")
+            print(f"   ADVERTENCIA  Advertencia: No se pudo leer informe de fundamentales: {e}")
     
     # Construir la pregunta para NotebookLM con ambos contextos
     if fundamentales_content:
@@ -257,14 +257,14 @@ Proporciona un análisis estructurado y fundamentado."""
                 error_msg = "Error desconocido (sin salida)"
             
             if "Authentication expired" in error_msg or "invalid" in error_msg.lower():
-                print(f"      ⚠️  NotebookLM autenticación expirada. Ejecute: notebooklm login")
-                print(f"      📝 Generando archivo placeholder...")
+                print(f"      ADVERTENCIA  NotebookLM autenticación expirada. Ejecute: notebooklm login")
+                print(f"       Generando archivo placeholder...")
                 # Crear un archivo placeholder con instrucciones
                 output_path.parent.mkdir(parents=True, exist_ok=True)
                 with open(output_path, 'w', encoding='utf-8') as f:
                     f.write(f"""# Análisis Berkshire Hathaway - {ticker}
 
-## ⚠️ Autenticación Requerida
+## ADVERTENCIA Autenticación Requerida
 
 El análisis Berkshire requiere autenticación con NotebookLM. Para completar este análisis:
 
@@ -281,9 +281,9 @@ El análisis Berkshire requiere autenticación con NotebookLM. Para completar es
    ```
 
 ## Estado de Completitud
-- ✓ Informe técnico (yfinance): Completado
-- ✓ Investigación web (Tavily): Completado
-- ⏳ Análisis Berkshire: Pendiente de autenticación
+- OK Informe técnico (yfinance): Completado
+- OK Investigación web (Tavily): Completado
+- Pendiente Análisis Berkshire: Pendiente de autenticación
 
 ## Próximos Pasos
 Después de autenticarse con NotebookLM, el análisis incluirá:
@@ -295,22 +295,22 @@ Después de autenticarse con NotebookLM, el análisis incluirá:
 """)
                 return True, str(output_path)
             else:
-                print(f"      📝 Generando archivo placeholder debido a error de NotebookLM...")
+                print(f"       Generando archivo placeholder debido a error de NotebookLM...")
                 # Crear un archivo placeholder indicando el error
                 output_path.parent.mkdir(parents=True, exist_ok=True)
                 with open(output_path, 'w', encoding='utf-8') as f:
                     f.write(f"""# Análisis Berkshire Hathaway - {ticker}
 
-## ⚠️ Error de Conexión
+## ADVERTENCIA Error de Conexión
 
 No se pudo completar el análisis Berkshire debido a un error al conectar con NotebookLM.
 
 **Error:** {error_msg}
 
 ## Estado de Completitud
-- ✓ Informe técnico (yfinance): Completado
-- ✓ Investigación web (Tavily): Completado
-- ⏳ Análisis Berkshire: Requiere solución de problemas
+- OK Informe técnico (yfinance): Completado
+- OK Investigación web (Tavily): Completado
+- Pendiente Análisis Berkshire: Requiere solución de problemas
 
 ## Solución de Problemas
 1. Verifique su conexión a internet
@@ -318,9 +318,9 @@ No se pudo completar el análisis Berkshire debido a un error al conectar con No
 3. Verifique que NotebookLM esté disponible en https://notebooklm.google.com
 
 ## Contenido Disponible
-✓ Informe técnico (yfinance) completado
-✓ Investigación web (Tavily) completada
-✓ Datos disponibles para revisión manual
+OK Informe técnico (yfinance) completado
+OK Investigación web (Tavily) completada
+OK Datos disponibles para revisión manual
 """)
                 return True, str(output_path)
 
@@ -337,7 +337,7 @@ No se pudo completar el análisis Berkshire debido a un error al conectar con No
         with open(output_path, 'w', encoding='utf-8') as f:
             f.write(answer)
         
-        print(f"      ✓ Análisis Berkshire generado")
+        print(f"      OK Análisis Berkshire generado")
         return True, str(output_path)
     
     except subprocess.TimeoutExpired:
@@ -359,18 +359,18 @@ def main():
     if args.from_natural:
         ticker = extract_ticker(args.from_natural)
         if not ticker:
-            print(f"❌ No se pudo extraer un ticker válido de: {args.from_natural}")
+            print(f"ERROR No se pudo extraer un ticker válido de: {args.from_natural}")
             return 1
     elif args.ticker:
         ticker = extract_ticker(args.ticker)
         if not ticker:
-            print(f"❌ Ticker inválido: {args.ticker}")
+            print(f"ERROR Ticker inválido: {args.ticker}")
             return 1
     else:
         parser.print_help()
         return 1
     
-    print(f"\n🔍 Iniciando workflow combinado para ticker: {ticker}\n")
+    print(f"\n Iniciando workflow combinado para ticker: {ticker}\n")
     print(f"[PARALELO] Ejecutando investigación técnica e investigación web en paralelo...\n")
     
     # Paso 1: Ejecutar EN PARALELO yfinance-report y tavily-research
@@ -388,30 +388,30 @@ def main():
             if future == yfinance_future:
                 success, result = future.result()
                 if not success:
-                    print(f"\n❌ {result}")
+                    print(f"\nERROR {result}")
                     return 1
                 yfinance_path = result
             else:
                 success, json_path, md_path = future.result()
                 if not success:
-                    print(f"\n❌ {json_path}")  # json_path contiene el mensaje de error en caso de fallo
+                    print(f"\nERROR {json_path}")  # json_path contiene el mensaje de error en caso de fallo
                     return 1
                 tavily_json_path = json_path
                 tavily_md_path = md_path
     
-    print(f"\n✅ Investigación técnica y web completadas\n")
+    print(f"\nCOMPLETADO Investigación técnica y web completadas\n")
     
     # Paso 2: Ejecutar berkshire-valuation con ambos informes
     success, result = call_berkshire_valuation(ticker, yfinance_path, tavily_md_path)
     if not success:
-        print(f"❌ {result}")
+        print(f"ERROR {result}")
         return 1
     
     berkshire_path = result
     
     # Éxito
-    print(f"\n✅ Workflow completado exitosamente para {ticker}")
-    print(f"\n📄 Archivos generados:")
+    print(f"\nCOMPLETADO Workflow completado exitosamente para {ticker}")
+    print(f"\nArchivos generados: Archivos generados:")
     print(f"   • Informe técnico (yfinance): {yfinance_path}")
     print(f"   • Investigación web JSON (Tavily): {tavily_json_path}")
     print(f"   • Informe de fundamentales (web): {tavily_md_path}")

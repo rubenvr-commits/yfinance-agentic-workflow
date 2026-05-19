@@ -143,19 +143,19 @@ Tavily Research (MCP) - Repsol, S.A. (REP.MC)
 
   [*] Searching for vision...
       Query: Repsol, S.A. long-term vision strategic direction...
-      ✓ Found 5 results
+      OK Found 5 results
 
   [*] Searching for values...
       Query: Repsol, S.A. corporate values philosophy ESG...
-      ✓ Found 4 results
+      OK Found 4 results
 
   [*] Searching for competitive_advantages...
       Query: Repsol, S.A. competitive advantages differentiation...
-      ✓ Found 5 results
+      OK Found 5 results
 
   [*] Searching for critical_decisions...
       Query: Repsol, S.A. management decisions crisis moments...
-      ✓ Found 3 results
+      OK Found 3 results
 
 [3] Organizing results into JSON...
 
@@ -271,17 +271,17 @@ evaluaciones/REP.MC/
 
 **Example output:**
 ```
-🔍 Starting research workflow for ticker: REP.MC
+ Starting research workflow for ticker: REP.MC
 
 [1/2] Generating Tavily research for REP.MC...
-   ✓ Research completed: .../evaluaciones/REP.MC/raw-search/web-search.json
+   OK Research completed: .../evaluaciones/REP.MC/raw-search/web-search.json
 
 [2/2] Generating fundamentals report...
-   ✓ Fundamentals report generated: .../evaluaciones/REP.MC/informe-fundamentales.md
+   OK Fundamentals report generated: .../evaluaciones/REP.MC/informe-fundamentales.md
 
-✅ Workflow completed successfully for REP.MC
+COMPLETADO Workflow completed successfully for REP.MC
 
-📄 Generated files:
+Archivos generados: Generated files:
    • Research JSON: .../evaluaciones/REP.MC/raw-search/web-search.json
    • Fundamentals Report: .../evaluaciones/REP.MC/informe-fundamentales.md
 ```

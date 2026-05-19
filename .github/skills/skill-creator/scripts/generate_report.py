@@ -269,7 +269,7 @@ def generate_html(data: dict, auto_refresh: bool = False, skill_name: str = "") 
             triggers = r.get("triggers", 0)
             runs = r.get("runs", 0)
 
-            icon = "✓" if did_pass else "✗"
+            icon = "OK" if did_pass else "NO"
             css_class = "pass" if did_pass else "fail"
 
             html_parts.append(f'                <td class="result {css_class}">{icon}<span class="rate">{triggers}/{runs}</span></td>\n')
@@ -281,7 +281,7 @@ def generate_html(data: dict, auto_refresh: bool = False, skill_name: str = "") 
             triggers = r.get("triggers", 0)
             runs = r.get("runs", 0)
 
-            icon = "✓" if did_pass else "✗"
+            icon = "OK" if did_pass else "NO"
             css_class = "pass" if did_pass else "fail"
 
             html_parts.append(f'                <td class="result test-result {css_class}">{icon}<span class="rate">{triggers}/{runs}</span></td>\n')
