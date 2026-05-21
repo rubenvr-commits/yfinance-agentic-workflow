@@ -1,0 +1,17 @@
+{
+  "skill_name": "final-report",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Consolidar los informes de NVDA en un informe final ejecutivo de 300-350 líneas",
+      "expected_output": "Un archivo informe-final.md con estructura completa: resumen ejecutivo, snapshot financiero, moat competitivo, gestión, fundamentales, crecimiento, valuación y recomendación. Debe integrar datos del técnico, fundamentales y berkshire sin redundancia.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Crea un informe final para REP.MC que consolide el análisis técnico, fundamental y Berkshire",
+      "expected_output": "Informe final de REP.MC (Repsol) con ~350 líneas mostrando: valuación actual, posición competitiva, gestión, estrategia a largo plazo, dinámicas de crecimiento, y recomendación de inversión integrada con margen de seguridad.",
+      "files": []
+    }
+  ]
+}
