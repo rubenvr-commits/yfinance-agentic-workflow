@@ -1,5 +1,8 @@
 // Report page JavaScript
 
+// Import charts module
+import { initCharts } from './charts.js';
+
 const md = window.markdownit({
     html: true,
     linkify: true,
@@ -82,16 +85,23 @@ function displayReport(data) {
     setupDetailedReportsLinks();
 }
 
-// Load chart data (Phase 1: just prepare the data)
-function loadChartData(metrics) {
+// Load chart data and initialize Plotly charts
+async function loadChartData(metrics) {
     if (metrics) {
         document.getElementById('chartsSection').style.display = 'block';
         
-        // Data is available but charts will be implemented in Phase 2
-        console.log('Chart data available:', metrics);
-        
-        // Store metrics for Phase 2 implementation
-        window.chartMetrics = metrics;
+        try {
+            // Initialize Plotly charts with metrics data
+            await initCharts(metrics);
+            console.log('Charts initialized successfully');
+        } catch (error) {
+            console.error('Error initializing charts:', error);
+            // Show error message but don't break the page
+            const chartsSection = document.getElementById('chartsSection');
+            if (chartsSection) {
+                chartsSection.innerHTML = '<div class="error-message">Error al cargar los gráficos</div>';
+            }
+        }
     }
 }
 
