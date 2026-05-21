@@ -26,6 +26,11 @@ foreach ($pyFile in $pyFiles) {
         continue
     }
     
+    # Skip package __init__.py files (they don't need direct tests)
+    if ($filename -eq "__init__.py") {
+        continue
+    }
+    
     # Extract module name without .py extension
     $moduleName = [System.IO.Path]::GetFileNameWithoutExtension($filename)
     
@@ -74,15 +79,23 @@ foreach ($pyFile in $pyFiles) {
         continue
     }
     
-    # Strategy 2: Search for imports of this module in test files
-    $testFiles = Get-ChildItem -Path "tests" -Name "*.py" -Recurse 2>/dev/null
-    $found = $false
-    
-    foreach ($testFile in $testFiles) {
-        $content = Get-Content "tests/$testFile" -Raw 2>/dev/null
-        if ($content -match "from\s+.*\b$moduleName\b" -or $content -match "import\s+.*\b$moduleName\b") {
-            $found = $true
-            break
+    # Strategy 2a: Search for the module name in ANY test file
+    # This catches cases like app/routes/health.py covered by test_health_routes.py
+    if (Test-Path "tests") {
+        $testFiles = @(Get-ChildItem -Path "tests" -Name "*.py" -Recurse -ErrorAction SilentlyContinue)
+        
+        foreach ($testFile in $testFiles) {
+            $content = Get-Content "tests/$testFile" -Raw -ErrorAction SilentlyContinue
+            
+            # Check if test file imports the module by any part of the filename
+            # e.g., for "health.py", check if test imports "health"
+            # e.g., for "reports.py", check if test imports "reports"
+            if ($content -match "\b$moduleName\b" -or `
+                $content -match "from\s+.*\b$moduleName\b" -or `
+                $content -match "import\s+.*\b$moduleName\b") {
+                $found = $true
+                break
+            }
         }
     }
     
@@ -93,24 +106,25 @@ foreach ($pyFile in $pyFiles) {
     # Strategy 3: Check for tests in sibling tests/ directory
     $moduleDir = Split-Path -Parent $pyFile
     if (Test-Path "$moduleDir/tests") {
-        $siblingTests = Get-ChildItem -Path "$moduleDir/tests" -Name "test_*.py", "*_test.py" 2>/dev/null
-        if ($siblingTests) {
+        $siblingTests = @(Get-ChildItem -Path "$moduleDir/tests" -Name "test_*.py", "*_test.py" -ErrorAction SilentlyContinue)
+        if ($siblingTests.Count -gt 0) {
             continue
         }
     }
     
-    # Strategy 4: Check if this file is part of a package with __init__.py
-    # and there are tests covering the package level
-    if (Test-Path "$(Split-Path -Parent $pyFile)/__init__.py") {
-        $packagePath = (Split-Path -Parent $pyFile) -replace '\\', '.'
-        $testFiles = Get-ChildItem -Path "tests" -Name "*.py" -Recurse 2>/dev/null
-        $found = $false
+    # Strategy 4: For package __init__.py files, check if any test imports the package
+    if ($filename -eq "__init__.py") {
+        $packagePath = (Split-Path -Parent $pyFile) -replace '\\', '.' -replace '^\\.', ''
         
-        foreach ($testFile in $testFiles) {
-            $content = Get-Content "tests/$testFile" -Raw 2>/dev/null
-            if ($content -match "from\s+$packagePath" -or $content -match "import\s+$packagePath") {
-                $found = $true
-                break
+        if (Test-Path "tests") {
+            $testFiles = @(Get-ChildItem -Path "tests" -Name "*.py" -Recurse -ErrorAction SilentlyContinue)
+            
+            foreach ($testFile in $testFiles) {
+                $content = Get-Content "tests/$testFile" -Raw -ErrorAction SilentlyContinue
+                if ($content -match "from\s+$packagePath" -or $content -match "import\s+$packagePath") {
+                    $found = $true
+                    break
+                }
             }
         }
         

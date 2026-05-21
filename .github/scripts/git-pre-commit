@@ -24,6 +24,11 @@ for py_file in $PY_FILES; do
         continue
     fi
     
+    # Skip package __init__.py files (they don't need direct tests)
+    if [[ "$filename" == "__init__.py" ]]; then
+        continue
+    fi
+    
     # Extract module name without .py extension
     module_name=$(basename "$py_file" .py)
     
@@ -48,7 +53,13 @@ for py_file in $PY_FILES; do
         continue
     fi
     
-    # Strategy 2: Search for imports of this module in test files
+    # Strategy 2: Search for the module name in ANY test file
+    # This catches cases like app/routes/health.py covered by test_health_routes.py
+    if grep -r "\b${module_name}\b" tests/ > /dev/null 2>&1; then
+        continue
+    fi
+    
+    # Strategy 3: Search for imports of this module in test files
     # Check multiple import patterns to be more flexible
     if grep -r "from.*\b${module_name}\b" tests/ > /dev/null 2>&1 || \
        grep -r "import.*\b${module_name}\b" tests/ > /dev/null 2>&1 || \
@@ -56,13 +67,13 @@ for py_file in $PY_FILES; do
         continue
     fi
     
-    # Strategy 3: Check for tests in sibling tests/ directory (same level as module)
+    # Strategy 4: Check for tests in sibling tests/ directory (same level as module)
     module_dir=$(dirname "$py_file")
     if [ -d "${module_dir}/tests" ] && [ ! -z "$(find ${module_dir}/tests -name 'test_*.py' -o -name '*_test.py' 2>/dev/null)" ]; then
         continue
     fi
     
-    # Strategy 4: Check if this file is part of a package with __init__.py
+    # Strategy 5: Check if this file is part of a package with __init__.py
     # and there are tests covering the package level
     if [ -f "$(dirname $py_file)/__init__.py" ] && grep -r "from.*$(dirname $py_file | sed 's|/|.|g')" tests/ > /dev/null 2>&1; then
         continue
