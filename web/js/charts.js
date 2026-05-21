@@ -82,10 +82,10 @@ function createPriceChart(metrics) {
             hovermode: 'x unified',
             plot_bgcolor: '#FAFAFA',
             paper_bgcolor: '#FFFFFF',
-            margin: { l: 40, r: 20, t: 40, b: 40 },
+            margin: { l: 45, r: 45, t: 45, b: 45 },
             font: { family: '-apple-system, BlinkMacSystemFont, Segoe UI, Roboto' },
             autosize: true,
-            height: 440
+            height: 352
         };
 
         // Configure responsive config
@@ -199,7 +199,7 @@ function createValuationsChart(metrics) {
             hovermode: 'y unified',
             plot_bgcolor: '#FAFAFA',
             paper_bgcolor: '#FFFFFF',
-            margin: { l: 50, r: 20, t: 40, b: 40 },
+            margin: { l: 60, r: 45, t: 45, b: 45 },
             font: { family: '-apple-system, BlinkMacSystemFont, Segoe UI, Roboto' },
             legend: {
                 orientation: 'v',
@@ -210,7 +210,7 @@ function createValuationsChart(metrics) {
                 borderwidth: 1
             },
             autosize: true,
-            height: 460
+            height: 300
         };
 
         // Configure responsive config
@@ -291,10 +291,10 @@ function createPerformanceChart(metrics) {
             hovermode: 'x unified',
             plot_bgcolor: '#FAFAFA',
             paper_bgcolor: '#FFFFFF',
-            margin: { l: 40, r: 20, t: 40, b: 40 },
+            margin: { l: 45, r: 45, t: 45, b: 45 },
             font: { family: '-apple-system, BlinkMacSystemFont, Segoe UI, Roboto' },
             autosize: true,
-            height: 460
+            height: 300
         };
 
         // Configure responsive config

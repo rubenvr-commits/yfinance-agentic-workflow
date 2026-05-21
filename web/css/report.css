@@ -87,6 +87,9 @@
     box-shadow: var(--shadow-sm);
     margin-bottom: 2rem;
     overflow: hidden;
+    width: calc(100% + 12.5% + 12.5%);
+    margin-left: -12.5%;
+    margin-right: -12.5%;
 }
 
 .charts-section h2 {
@@ -101,8 +104,8 @@
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 1.5rem;
-    margin-bottom: 0;
-    padding: 1.5rem 2rem 2rem 2rem;
+    margin: 0;
+    padding: 2rem;
 }
 
 .chart-container {
@@ -118,12 +121,12 @@
 
 .chart-container:first-child {
     grid-column: 1 / -1;
-    min-height: 460px;
+    min-height: 368px;
 }
 
 .chart-container:nth-child(2),
 .chart-container:nth-child(3) {
-    min-height: 480px;
+    min-height: 320px;
 }
 
 .chart-placeholder {
@@ -140,7 +143,17 @@
     font-weight: 500;
     box-sizing: border-box;
     margin: 0;
-    margin-left: -8px;
+}
+
+/* Plotly chart containers */
+#priceChart,
+#valuationChart,
+#performanceChart {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: block !important;
 }
 
 /* Content Section */
