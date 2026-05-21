@@ -4,9 +4,42 @@ import json
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Optional
+import sys
 
 from app.config import REPORTS_DIR
 from app.models import MetricsData
+
+
+def generate_metrics_if_missing(ticker: str) -> bool:
+    """
+    Automatically generate metrics if they don't exist but the report does.
+    
+    Args:
+        ticker: Stock ticker symbol
+    
+    Returns:
+        True if metrics were generated or already exist, False otherwise
+    """
+    metrics_path = REPORTS_DIR / ticker / "raw-search" / "metrics.json"
+    
+    # Metrics already exist
+    if metrics_path.exists():
+        return True
+    
+    # Check if report exists (metrics should exist if report does)
+    report_path = REPORTS_DIR / ticker / "informe-final.md"
+    if not report_path.exists():
+        return False
+    
+    # Report exists but metrics don't - generate them
+    try:
+        from app.services.generation_service import generate_metrics
+        print(f"Auto-generating metrics for {ticker}...")
+        # Launch generation in background to keep response fast
+        return generate_metrics(ticker, background=True)
+    except Exception as e:
+        print(f"Error auto-generating metrics: {e}")
+        return False
 
 
 def get_report_status(ticker: str) -> dict:
@@ -64,10 +97,16 @@ def get_report_content(ticker: str) -> Optional[str]:
 
 
 def get_report_data(ticker: str) -> Optional[dict]:
-    """Get combined report data (content + metrics + metadata)."""
+    """Get combined report data (content + metrics + metadata).
+    
+    Automatically generates metrics if report exists but metrics don't.
+    """
     report_content = get_report_content(ticker)
     if not report_content:
         return None
+    
+    # Ensure metrics exist (auto-generate if missing)
+    generate_metrics_if_missing(ticker)
     
     status = get_report_status(ticker)
     metrics = load_metrics_json(ticker)
