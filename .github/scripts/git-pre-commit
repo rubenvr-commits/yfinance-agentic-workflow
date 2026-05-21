@@ -27,7 +27,13 @@ for py_file in $PY_FILES; do
     # Extract module name without .py extension
     module_name=$(basename "$py_file" .py)
     
-    # Strategy 1: Check common test file locations by name
+    # Convert file path to potential test name patterns
+    # e.g., app/main.py -> test_app_main.py or test_main.py
+    # e.g., app/routes/health.py -> test_health_routes.py or test_routes_health.py
+    path_parts=$(echo "$py_file" | sed 's|/|_|g' | sed 's|\.py$||')
+    path_parts_reverse=$(echo "$py_file" | awk -F'/' '{for(i=NF;i>=1;i--) printf "%s_", $i}' | sed 's/_$//' | sed 's|\.py$||')
+    
+    # Strategy 1: Check common test file locations by name (exact match)
     if [ -f "tests/test_$(basename $py_file)" ] || \
        [ -f "__tests__/$(basename $py_file .py).test.py" ] || \
        [ -f "$(dirname $py_file)/test_$(basename $py_file)" ] || \
@@ -35,16 +41,30 @@ for py_file in $PY_FILES; do
         continue
     fi
     
+    # Strategy 1b: Check for tests with path-based naming patterns
+    # e.g., app/main.py -> tests/test_app_main.py
+    if [ -f "tests/test_${path_parts}.py" ] || \
+       [ -f "tests/test_${path_parts_reverse}.py" ]; then
+        continue
+    fi
+    
     # Strategy 2: Search for imports of this module in test files
-    # Check if any test file imports or references this module by name
-    if grep -r "from.*${module_name}" tests/ > /dev/null 2>&1 || \
-       grep -r "import.*${module_name}" tests/ > /dev/null 2>&1; then
+    # Check multiple import patterns to be more flexible
+    if grep -r "from.*\b${module_name}\b" tests/ > /dev/null 2>&1 || \
+       grep -r "import.*\b${module_name}\b" tests/ > /dev/null 2>&1 || \
+       grep -r "from.*$(echo $py_file | sed 's|\.py$||')" tests/ > /dev/null 2>&1; then
         continue
     fi
     
     # Strategy 3: Check for tests in sibling tests/ directory (same level as module)
     module_dir=$(dirname "$py_file")
     if [ -d "${module_dir}/tests" ] && [ ! -z "$(find ${module_dir}/tests -name 'test_*.py' -o -name '*_test.py' 2>/dev/null)" ]; then
+        continue
+    fi
+    
+    # Strategy 4: Check if this file is part of a package with __init__.py
+    # and there are tests covering the package level
+    if [ -f "$(dirname $py_file)/__init__.py" ] && grep -r "from.*$(dirname $py_file | sed 's|/|.|g')" tests/ > /dev/null 2>&1; then
         continue
     fi
     
@@ -57,8 +77,16 @@ if [ ${#MISSING_TESTS[@]} -gt 0 ]; then
     printf '  - %s\n' "${MISSING_TESTS[@]}"
     echo ""
     echo "It's recommended to create tests before committing."
-    echo "Continue? (y/n)"
-    read -r response
+    
+    # Use tty to handle input more reliably
+    if [ -t 0 ]; then
+        # Interactive terminal
+        read -r -p "Continue? (y/n) " response < /dev/tty
+    else
+        # Non-interactive, default to no
+        read -r response
+    fi
+    
     if [[ ! "$response" =~ ^[Yy]$ ]]; then
         echo "Commit aborted."
         exit 1

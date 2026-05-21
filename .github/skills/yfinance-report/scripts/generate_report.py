@@ -739,6 +739,102 @@ def build_data_dict(ticker_symbol, ticker, info):
     return data
 
 
+def _to_float_safe(value):
+    """Safely convert value to float, returns None if fails."""
+    if value == "N/A" or value is None:
+        return None
+    try:
+        return float(value)
+    except (ValueError, TypeError):
+        return None
+
+
+def _extract_price_history(ticker, history_cache):
+    """Extract price history for last 6 and 12 months."""
+    price_data_6m = []
+    price_data_12m = []
+    
+    # 6 months data
+    hist_6m = history_cache.get("6mo")
+    if hist_6m is not None and not hist_6m.empty:
+        for date, row in hist_6m.iterrows():
+            price_data_6m.append({
+                "date": date.strftime("%Y-%m-%d"),
+                "close": round(float(row["Close"]), 2)
+            })
+    
+    # 12 months data
+    hist_12m = history_cache.get("1y")
+    if hist_12m is not None and not hist_12m.empty:
+        for date, row in hist_12m.iterrows():
+            price_data_12m.append({
+                "date": date.strftime("%Y-%m-%d"),
+                "close": round(float(row["Close"]), 2)
+            })
+    
+    return price_data_6m, price_data_12m
+
+
+def _build_metrics_json(ticker_symbol, ticker, info, history_cache):
+    """Build JSON structure with quantitative metrics."""
+    
+    # Extract current price
+    current_price = _to_float_safe(safe_get(info, "currentPrice"))
+    
+    # Get price histories
+    price_history_6m, price_history_12m = _extract_price_history(ticker, history_cache)
+    
+    # Valuations
+    pe_ratio = _to_float_safe(safe_get(info, "trailingPE"))
+    pb_ratio = _to_float_safe(safe_get(info, "priceToBook"))
+    ps_ratio = _to_float_safe(safe_get(info, "priceToSalesTrailing12Months"))
+    price_to_fcf = None
+    fcf = _to_float_safe(safe_get(info, "freeCashflow"))
+    market_cap = _to_float_safe(safe_get(info, "marketCap"))
+    if fcf and market_cap and fcf != 0:
+        price_to_fcf = round(market_cap / fcf, 2)
+    
+    # Performance metrics
+    roe = _to_float_safe(safe_get(info, "returnOnEquity"))
+    roa = _to_float_safe(safe_get(info, "returnOnAssets"))
+    fcf_billions = None
+    if fcf:
+        fcf_billions = round(fcf / 1e9, 2)
+    dividend_yield = _to_float_safe(safe_get(info, "dividendYield"))
+    
+    # Sector comparison
+    pe_sector = None  # Would need to fetch sector data separately
+    pe_sp500 = None   # Would need to fetch S&P500 data separately
+    
+    metrics_json = {
+        "ticker": ticker_symbol,
+        "fecha": datetime.now().strftime("%Y-%m-%d"),
+        "precio_actual": current_price,
+        "precios_historicos": {
+            "ultimos_6m": price_history_6m,
+            "ultimos_12m": price_history_12m
+        },
+        "valuations": {
+            "pe_ratio": pe_ratio,
+            "pb_ratio": pb_ratio,
+            "ps_ratio": ps_ratio,
+            "price_to_fcf": price_to_fcf
+        },
+        "performance": {
+            "roe": roe,
+            "roa": roa,
+            "fcf_billions": fcf_billions,
+            "dividend_yield": dividend_yield
+        },
+        "sector_comparison": {
+            "pe_sector": pe_sector,
+            "pe_sp500": pe_sp500
+        }
+    }
+    
+    return metrics_json
+
+
 def generate_report(ticker_symbol):
     """Generate and save financial report for a ticker."""
     
@@ -753,6 +849,7 @@ def generate_report(ticker_symbol):
     
     # Build data dictionary
     data = build_data_dict(ticker_symbol, ticker, info)
+    history_cache = _fetch_history_cache(ticker)
     
     # Find and read template
     script_dir = Path(__file__).parent
@@ -783,11 +880,30 @@ def generate_report(ticker_symbol):
     output_dir = Path("evaluaciones") / ticker_symbol
     output_dir.mkdir(parents=True, exist_ok=True)
     
+    # Save markdown report
     output_file = output_dir / "informe-tecnico.md"
     with open(output_file, "w", encoding="utf-8") as f:
         f.write(filled)
     
     print(f"[+] Report saved to {output_file}")
+    
+    # Generate and save metrics JSON
+    try:
+        metrics_json = _build_metrics_json(ticker_symbol, ticker, info, history_cache)
+        
+        # Create raw-search directory
+        raw_search_dir = output_dir / "raw-search"
+        raw_search_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Save metrics JSON
+        metrics_file = raw_search_dir / "metrics.json"
+        with open(metrics_file, "w", encoding="utf-8") as f:
+            json.dump(metrics_json, f, indent=2, ensure_ascii=False)
+        
+        print(f"[+] Metrics JSON saved to {metrics_file}")
+    except Exception as e:
+        print(f"Warning: Failed to generate metrics JSON: {e}")
+    
     return True
 
 

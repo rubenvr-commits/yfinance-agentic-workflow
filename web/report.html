@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Informe Financiero</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/report.css">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/markdown-it@14/dist/markdown-it.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header with Navigation -->
+        <header class="report-header">
+            <div class="header-top">
+                <a href="/" class="back-link">← Volver</a>
+                <h1 id="tickerTitle" class="report-title">TICKER</h1>
+                <div class="header-actions">
+                    <button id="downloadBtn" class="action-btn download-btn" title="Descargar precios">
+                        Descargar CSV
+                    </button>
+                </div>
+            </div>
+            <div class="report-metadata">
+                <span id="generatedDate" class="metadata-item">Actualizado: -</span>
+                <span id="nextReview" class="metadata-item">Próxima revisión: -</span>
+            </div>
+        </header>
+
+        <main class="report-main">
+            <!-- Loading Indicator -->
+            <div id="loadingIndicator" class="loading-indicator" style="display: none;">
+                <div class="spinner"></div>
+                <p>Cargando informe...</p>
+            </div>
+
+            <!-- Error Message -->
+            <div id="errorMessage" class="error-message" style="display: none;">
+                <p id="errorText"></p>
+            </div>
+
+            <!-- Charts Section -->
+            <section class="charts-section" style="display: none;" id="chartsSection">
+                <h2>Análisis Técnico y Financiero</h2>
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <div id="priceChart" class="chart-placeholder">
+                            <p>Gráfico de Precios (Fase 2)</p>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <div id="valuationChart" class="chart-placeholder">
+                            <p>Valuaciones (Fase 2)</p>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <div id="performanceChart" class="chart-placeholder">
+                            <p>Performance (Fase 2)</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Report Content Section -->
+            <section class="content-section" id="contentSection" style="display: none;">
+                <div class="markdown-content" id="reportContent">
+                    <!-- Markdown will be rendered here -->
+                </div>
+            </section>
+
+            <!-- Detailed Reports Section -->
+            <section class="detailed-reports" id="detailedReportsSection" style="display: none;">
+                <h2>Informes Detallados</h2>
+                <div class="reports-links">
+                    <a href="javascript:void(0)" class="report-link" id="technicalLink">
+                        <span class="report-icon">📊</span>
+                        <span class="report-name">Informe Técnico</span>
+                    </a>
+                    <a href="javascript:void(0)" class="report-link" id="fundamentalLink">
+                        <span class="report-icon">📈</span>
+                        <span class="report-name">Análisis Fundamental</span>
+                    </a>
+                    <a href="javascript:void(0)" class="report-link" id="berkshireLink">
+                        <span class="report-icon">🎯</span>
+                        <span class="report-name">Valuación Berkshire</span>
+                    </a>
+                </div>
+            </section>
+
+            <!-- Modal for detailed reports -->
+            <div id="detailModal" class="modal">
+                <div class="modal-content">
+                    <span class="close-modal">&times;</span>
+                    <div id="modalBody" class="markdown-content"></div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>Análisis financiero - Datos actualizados al 21 de mayo de 2026</p>
+        </footer>
+    </div>
+
+    <script src="/js/report.js"></script>
+</body>
+</html>
