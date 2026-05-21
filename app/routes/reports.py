@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, HTTPException, Response
 from typing import Optional
+from pathlib import Path
 
 from app.models import ReportStatus, ReportResponse, GenerationStatus, GenerationResult
 from app.services.report_service import get_report_status, get_report_data, get_price_history
@@ -86,3 +87,67 @@ async def get_charts_data(ticker: str):
         raise HTTPException(status_code=404, detail="Metrics data not found")
     
     return data["metrics"]
+
+
+@router.get("/{ticker}/informe-tecnico.md")
+async def get_technical_report(ticker: str):
+    """Get technical report markdown."""
+    ticker = validate_ticker(ticker)
+    
+    report_path = Path(f"evaluaciones/{ticker}/informe-tecnico.md")
+    if not report_path.exists():
+        raise HTTPException(status_code=404, detail="Technical report not found")
+    
+    try:
+        content = report_path.read_text(encoding='utf-8')
+        return Response(content=content, media_type="text/markdown")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error reading report: {str(e)}")
+
+
+@router.get("/{ticker}/informe-fundamentales.md")
+async def get_fundamental_report(ticker: str):
+    """Get fundamental report markdown."""
+    ticker = validate_ticker(ticker)
+    
+    report_path = Path(f"evaluaciones/{ticker}/informe-fundamentales.md")
+    if not report_path.exists():
+        raise HTTPException(status_code=404, detail="Fundamental report not found")
+    
+    try:
+        content = report_path.read_text(encoding='utf-8')
+        return Response(content=content, media_type="text/markdown")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error reading report: {str(e)}")
+
+
+@router.get("/{ticker}/informe-berkshire.md")
+async def get_berkshire_report(ticker: str):
+    """Get Berkshire valuation report markdown."""
+    ticker = validate_ticker(ticker)
+    
+    report_path = Path(f"evaluaciones/{ticker}/informe-berkshire.md")
+    if not report_path.exists():
+        raise HTTPException(status_code=404, detail="Berkshire report not found")
+    
+    try:
+        content = report_path.read_text(encoding='utf-8')
+        return Response(content=content, media_type="text/markdown")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error reading report: {str(e)}")
+
+
+@router.get("/{ticker}/informe-final.md")
+async def get_final_report(ticker: str):
+    """Get final report markdown."""
+    ticker = validate_ticker(ticker)
+    
+    report_path = Path(f"evaluaciones/{ticker}/informe-final.md")
+    if not report_path.exists():
+        raise HTTPException(status_code=404, detail="Final report not found")
+    
+    try:
+        content = report_path.read_text(encoding='utf-8')
+        return Response(content=content, media_type="text/markdown")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error reading report: {str(e)}")

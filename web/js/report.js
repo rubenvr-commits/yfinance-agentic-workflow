@@ -2,6 +2,7 @@
 
 // Import charts module
 import { initCharts } from './charts.js';
+import { renderMarkdown, filterEmptySections } from './markdown-renderer.js';
 
 const md = window.markdownit({
     html: true,
@@ -73,9 +74,10 @@ function displayReport(data) {
             `Próxima revisión: ${formatDate(nextReview)}`;
     }
     
-    // Render markdown content
+    // Render markdown content with filtering for empty sections
     if (data.content) {
-        const htmlContent = md.render(data.content);
+        const filtered = filterEmptySections(data.content);
+        const htmlContent = md.render(filtered);
         document.getElementById('reportContent').innerHTML = htmlContent;
         document.getElementById('contentSection').style.display = 'block';
     }
@@ -146,22 +148,36 @@ async function loadDetailedReport(reportType) {
     const modal = document.getElementById('detailModal');
     const modalBody = document.getElementById('modalBody');
     
-    // In Phase 1, try to load the markdown files if they exist
-    // In Phase 2, these would be loaded from separate endpoints
+    showLoading(true);
+    
     try {
-        const response = await fetch(`/detailed-reports/${currentTicker}/${reportType}.md`);
+        // Try API endpoint first (Phase 3)
+        const response = await fetch(`/api/reports/${currentTicker}/${reportType}.md`);
         
         if (response.ok) {
             const markdown = await response.text();
-            const html = md.render(markdown);
+            const filtered = filterEmptySections(markdown);
+            const html = renderMarkdown(markdown);
             modalBody.innerHTML = html;
             modal.classList.add('show');
         } else {
-            alert(`No se encontró el informe ${reportType}`);
+            // Fallback to file path (Phase 1/2)
+            const fileResponse = await fetch(`/detailed-reports/${currentTicker}/${reportType}.md`);
+            if (fileResponse.ok) {
+                const markdown = await fileResponse.text();
+                const filtered = filterEmptySections(markdown);
+                const html = md.render(filtered);
+                modalBody.innerHTML = html;
+                modal.classList.add('show');
+            } else {
+                showError(`No se encontró el informe ${reportType}`);
+            }
         }
     } catch (error) {
-        console.log(`Informe ${reportType} no disponible aún (Fase 1)`);
-        alert(`El informe ${reportType} aún no está disponible`);
+        console.error(`Error loading ${reportType}:`, error);
+        showError(`Error al cargar el informe ${reportType}`);
+    } finally {
+        showLoading(false);
     }
 }
 
