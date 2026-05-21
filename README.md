@@ -2,6 +2,10 @@
 
 Un sistema integrado de análisis de inversiones que combina datos de `yfinance`, búsquedas web estructuradas, agentes especializados y principios de inversión de Berkshire Hathaway mediante skills de GitHub Copilot.
 
+## Vista Rápida
+
+El proyecto expone una app FastAPI en `app/`, un frontend estático en `web/` y un punto de entrada `run.py` para desarrollo local.
+
 ## Descripción General
 
 Este repositorio es una plataforma de investigación financiera empresarial que automatiza el análisis de activos desde múltiples perspectivas:
@@ -12,8 +16,7 @@ Este repositorio es una plataforma de investigación financiera empresarial que 
 - **Agentes especializados** para análisis automatizado y orquestación
 - **Skills reutilizables** de GitHub Copilot para cada componente
 - **Control de calidad automático** con pre-commit hooks
-- **Persistencia de datos** en PostgreSQL
-- **Orquestación** con Docker Compose
+- **Ejecución local** con FastAPI y frontend estático a través de `python run.py`
 
 ## Componentes del Proyecto
 
@@ -49,6 +52,7 @@ Este repositorio es una plataforma de investigación financiera empresarial que 
 
 ```
 yfinance-agentic-workflow/
+├── app/                                 # API FastAPI y lógica de negocio
 ├── .github/
 │   ├── agents/                           # Agentes especializados
 │   │   ├── analista-financiero.agent.md
@@ -78,6 +82,7 @@ yfinance-agentic-workflow/
 │   ├── NVDA/                            # NVIDIA
 │   ├── REP.MC/                          # Repsol
 │   └── [ticker]/                        # Nuevas evaluaciones
+├── run.py                                # Arranque local del servidor
 ├── tests/                                # Tests centralizados
 │   ├── test_pre_commit_validator.py
 │   ├── test_validator_integration.py
@@ -87,13 +92,32 @@ yfinance-agentic-workflow/
 │   ├── test_configuration_files.py
 │   ├── run_staged_tests.py
 │   └── run_tavily_tests.py
-├── postgres/                             # Datos PostgreSQL (volumen Docker)
 ├── .env                                  # Variables de entorno (privado)
 ├── example.env                           # Ejemplo de configuración
-├── docker-compose.yml                    # Orquestación de servicios
+├── web/                                  # Frontend estático
 ├── requirements.txt                      # Dependencias Python
 └── README.md                             # Este archivo
 ```
+
+## API
+
+Rutas reales disponibles en `app/routes`:
+
+- `GET /health`
+- `GET /api/reports/{ticker}/status`
+- `GET /api/reports/{ticker}`
+- `POST /api/reports/{ticker}/generate`
+- `GET /api/reports/{ticker}/generate/progress`
+- `GET /api/reports/{ticker}/precios.csv`
+- `GET /api/reports/{ticker}/charts-data`
+- `GET /api/reports/{ticker}/informe-tecnico.md`
+- `GET /api/reports/{ticker}/informe-fundamentales.md`
+- `GET /api/reports/{ticker}/informe-berkshire.md`
+- `GET /api/reports/{ticker}/informe-final.md`
+
+## Cómo arrancar
+
+Para desarrollo local, ejecuta `python run.py` y abre `http://localhost:8000` para el frontend y `http://localhost:8000/docs` para la documentación de la API.
 
 ## Evaluaciones Disponibles
 
@@ -156,7 +180,6 @@ tests/test_tavily_api_migration.py (que importa utils)
 
 ### Requisitos
 - Python 3.8+
-- Docker y Docker Compose
 - Git
 - GitHub Copilot Chat (para usar agentes y skills)
 - Claves API: `TAVILY_API_KEY`, `NOTEBOOKLM_ID`
@@ -197,10 +220,10 @@ tests/test_tavily_api_migration.py (que importa utils)
    - `TAVILY_API_KEY` - Obtén en https://app.tavily.com
    - `NOTEBOOKLM_ID` - Ya está configurado en `example.env` (6904dc8b-742e-4192-82db-32e81e1f5e0f) y no es personalizable
 
-5. **Iniciar PostgreSQL** (opcional, para persistencia):
-   ```bash
-   docker-compose up -d
-   ```
+5. **Ejecutar la aplicación**:
+  ```bash
+  python run.py
+  ```
 
 ## Flujo de Trabajo Recomendado
 
@@ -338,31 +361,9 @@ Este proyecto implementa la filosofía de inversión de Berkshire Hathaway:
 - **Retorno sobre Capital**: Analizar ROE, ROIC y capacidad de reinversión
 - **Precio vs. Valor**: Buscar empresas cotizando por debajo del valor intrínseco
 
-## Docker Compose
+## Ejecución Local
 
-Servicio PostgreSQL 18 para persistencia de datos:
-
-```yaml
-services:
-  postgres:
-    image: postgres:18
-    container_name: yfinance_postgres
-    env_file:
-      - .env
-    ports:
-      - '5432:5432'
-    volumes:
-      - ./postgres/18/docker:/var/lib/postgresql/data
-    restart: unless-stopped
-```
-
-**Comandos útiles**:
-```bash
-docker-compose up -d      # Iniciar servicios
-docker-compose logs -f    # Ver logs
-docker-compose down       # Detener servicios
-docker-compose ps         # Ver estado
-```
+El proyecto actualmente se ejecuta con FastAPI y el frontend estático mediante `python run.py`. No requiere Docker ni persistencia PostgreSQL para el flujo habitual del repositorio.
 
 ## Documentación de Desarrollo
 
@@ -377,7 +378,6 @@ Archivos de instrucción obligatorios en `.github/instructions/`:
 
 - `example.env` contiene ejemplo de configuración (no editar, usar para crear `.env`)
 - `.env` contiene claves privadas (no commitear, añadir a `.gitignore`)
-- `docker-compose.yml` carga `.env` para configurar PostgreSQL
 - `requirements.txt` incluye: yfinance, notebooklm-py, tavily-py, y más
 - Pre-commit hooks se auto-cargan en VS Code (no requiere instalación manual)
 
