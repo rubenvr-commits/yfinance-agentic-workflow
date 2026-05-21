@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analizador de Reportes Financieros</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <h1>Analizador Financiero</h1>
+                <p class="subtitle">Análisis de reportes técnicos, fundamentales y valuación Berkshire</p>
+            </div>
+        </header>
+
+        <main class="main">
+            <!-- Search Section -->
+            <section class="search-section">
+                <div class="search-box">
+                    <input 
+                        type="text" 
+                        id="tickerInput" 
+                        class="ticker-input" 
+                        placeholder="Ingrese ticker (ej: NVDA, AAPL, REP.MC)"
+                        autocomplete="off"
+                    >
+                    <button id="searchBtn" class="search-btn">Buscar</button>
+                </div>
+                <p class="search-hint">Ingrese un símbolo de ticker válido para buscar o generar reportes</p>
+            </section>
+
+            <!-- Recent Reports Table -->
+            <section class="reports-section">
+                <h2>Reportes Recientes</h2>
+                <table class="reports-table">
+                    <thead>
+                        <tr>
+                            <th>Ticker</th>
+                            <th>Estado</th>
+                            <th>Fecha de Generación</th>
+                            <th>Edad</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reportsTable">
+                        <tr class="example-row">
+                            <td>NVDA</td>
+                            <td><span class="badge badge-success">Disponible</span></td>
+                            <td>2026-05-16</td>
+                            <td>5 días</td>
+                            <td><a href="/report.html?ticker=NVDA" class="action-link">Ver Informe</a></td>
+                        </tr>
+                        <tr class="example-row">
+                            <td>REP.MC</td>
+                            <td><span class="badge badge-success">Disponible</span></td>
+                            <td>2026-05-15</td>
+                            <td>6 días</td>
+                            <td><a href="/report.html?ticker=REP.MC" class="action-link">Ver Informe</a></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Loading Indicator -->
+            <div id="loadingIndicator" class="loading-indicator" style="display: none;">
+                <div class="spinner"></div>
+                <p id="loadingMessage">Buscando informe...</p>
+            </div>
+
+            <!-- Error Message -->
+            <div id="errorMessage" class="error-message" style="display: none;">
+                <p id="errorText"></p>
+                <button onclick="document.getElementById('errorMessage').style.display='none'" class="close-btn">Cerrar</button>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>Herramienta de análisis financiero - Datos en tiempo real desde Yahoo Finance</p>
+        </footer>
+    </div>
+
+    <script src="/js/search.js"></script>
+</body>
+</html>
