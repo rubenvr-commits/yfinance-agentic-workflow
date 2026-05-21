@@ -2,3 +2,4 @@
 .env
 evaluaciones/*
 **/__pycache__/
+documentos/
