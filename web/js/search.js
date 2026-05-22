@@ -76,10 +76,12 @@ async function generateReport(ticker) {
         
         if (response.ok) {
             const result = await response.json();
-            
-            if (result.status === 'started') {
+
+            // Accept several server-side status tokens as start of generation
+            const acceptedStartStatuses = ['started', 'in_progress', 'metrics_generated', 'awaiting_reports'];
+            if (acceptedStartStatuses.includes(result.status)) {
                 showLoading(true, 'Generando reportes...\nEsta operación puede tomar varios minutos.');
-                
+
                 // Start polling for progress
                 pollGenerationProgress(ticker);
             } else {

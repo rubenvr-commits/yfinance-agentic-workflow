@@ -97,21 +97,24 @@ async def trigger_generation(ticker: str) -> dict:
         print(f"Reports found for {ticker}, generating metrics...")
         # Start metrics generation in background to avoid blocking
         generate_metrics(ticker, background=True)
-        
+
         return {
-            "status": "metrics_generated",
+            "status": "started",
             "ticker": ticker,
-            "message": "Reports detected and metrics generated automatically"
+            "phases": ["tecnico", "fundamentales", "berkshire", "final"],
+            "current_phase": "metrics",
+            "progress_percent": 90,
+            "message": "Reports detected. Metrics generation started in background."
         }
-    
-    # Reports don't exist yet - workflow needs to be initiated via the agent
+
+    # Reports don't exist yet - indicate that generation workflow is started/ready
     return {
-        "status": "awaiting_reports",
+        "status": "started",
         "ticker": ticker,
         "phases": ["tecnico", "fundamentales", "berkshire", "final"],
         "current_phase": "tecnico",
         "progress_percent": 0,
-        "message": "Report generation workflow ready. Use @analista-financiero agent to generate reports."
+        "message": "Report generation workflow initiated. Use @analista-financiero agent to generate reports."
     }
 
 
@@ -125,24 +128,27 @@ async def get_generation_progress(ticker: str) -> dict:
         return {
             "status": "completed",
             "ticker": ticker,
+            "phases": ["tecnico", "fundamentales", "berkshire", "final"],
             "current_phase": "metrics",
             "progress_percent": 100,
             "message": "All reports and metrics generated"
         }
-    
+
     final_report = report_dir / "informe-final.md"
     if final_report.exists():
         return {
             "status": "in_progress",
             "ticker": ticker,
+            "phases": ["tecnico", "fundamentales", "berkshire", "final"],
             "current_phase": "metrics",
             "progress_percent": 90,
             "message": "Generating metrics data..."
         }
-    
+
     return {
         "status": "in_progress",
         "ticker": ticker,
+        "phases": ["tecnico", "fundamentales", "berkshire", "final"],
         "current_phase": "reports",
         "progress_percent": 50,
         "message": "Generating financial reports..."
