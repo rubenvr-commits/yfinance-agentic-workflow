@@ -9,6 +9,7 @@ Validates:
 
 import sys
 import os
+import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
 
@@ -31,6 +32,29 @@ def test_tavily_api_client_initialization():
         assert client.API_ENDPOINT == "https://api.tavily.com/search", "API endpoint incorrect"
         
     print("PASS: TavilyAPIClient initializes correctly with API key")
+
+
+def test_tavily_api_client_initialization_from_root_env():
+    """Test 1b: TavilyAPIClient falls back to the repository root .env file."""
+    import utils
+    from utils import TavilyAPIClient
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        project_root = Path(temp_dir)
+        scripts_dir = project_root / ".github" / "skills" / "tavily-research" / "scripts"
+        scripts_dir.mkdir(parents=True, exist_ok=True)
+        (project_root / ".env").write_text("TAVILY_API_KEY=root-env-key\n", encoding="utf-8")
+
+        fake_utils_file = scripts_dir / "utils.py"
+
+        with patch.object(utils, "__file__", str(fake_utils_file)):
+            with patch.dict(os.environ, {}, clear=True):
+                client = TavilyAPIClient(timeout=30)
+
+                assert client.api_key == "root-env-key", "API key not loaded from root .env"
+                assert os.environ["TAVILY_API_KEY"] == "root-env-key", "API key not exported to environment"
+
+    print("PASS: TavilyAPIClient falls back to root .env")
 
 
 def test_search_criterion_returns_normalized_results():
@@ -108,6 +132,7 @@ if __name__ == "__main__":
     # Run tests manually without pytest
     try:
         test_tavily_api_client_initialization()
+        test_tavily_api_client_initialization_from_root_env()
         test_search_criterion_returns_normalized_results()
         test_search_criterion_handles_api_errors()
         print("\n" + "="*70)

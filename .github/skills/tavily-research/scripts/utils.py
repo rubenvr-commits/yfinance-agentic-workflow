@@ -9,15 +9,15 @@ results to a consistent schema.
 import json
 import os
 import sys
+from pathlib import Path
 from typing import Dict, List, Optional, Any
 import logging
 import requests
 
-# Fix encoding for Windows console (UTF-8 instead of charmap)
-if sys.platform == 'win32':
-    import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+# Avoid reassigning sys.stdout/stderr globally during import; pytest
+# replaces these streams for capture and reassigning them here can
+# cause I/O errors. If a script needs specific console encoding,
+# handle it at runtime (e.g., under __main__) instead.
 
 logging.basicConfig(
     level=logging.INFO,
@@ -56,12 +56,54 @@ class TavilyAPIClient:
             # Get Tavily API key from environment
             self.api_key = os.environ.get('TAVILY_API_KEY')
             if not self.api_key:
-                raise RuntimeError("TAVILY_API_KEY environment variable is required")
+                self.api_key = self._load_api_key_from_root_env()
+                if self.api_key:
+                    os.environ['TAVILY_API_KEY'] = self.api_key
+                    logger.info("Loaded Tavily API key from project root .env")
+
+            if not self.api_key:
+                raise RuntimeError("TAVILY_API_KEY not found in environment or project root .env")
             
             logger.info("[OK] Tavily API client initialized successfully")
         except Exception as e:
             logger.error(f"[ERROR] Failed to initialize API client: {e}")
             raise
+
+
+    @staticmethod
+    def _load_api_key_from_root_env() -> Optional[str]:
+        """Load TAVILY_API_KEY from the repository root .env file."""
+        env_path = None
+
+        for parent in Path(__file__).resolve().parents:
+            candidate = parent / ".env"
+            if candidate.exists():
+                env_path = candidate
+                break
+
+        if env_path is None:
+            return None
+
+        try:
+            with env_path.open("r", encoding="utf-8") as handle:
+                for raw_line in handle:
+                    line = raw_line.strip()
+                    if not line or line.startswith("#"):
+                        continue
+
+                    if line.startswith("export "):
+                        line = line[len("export "):].strip()
+
+                    if "=" not in line:
+                        continue
+
+                    key, value = line.split("=", 1)
+                    if key.strip() == "TAVILY_API_KEY":
+                        return value.strip().strip('"').strip("'") or None
+        except Exception as exc:
+            logger.warning(f"Failed to read Tavily API key from {env_path}: {exc}")
+
+        return None
     
     
     def search_criterion(self, query: str, max_results: int = 3, search_depth: str = "basic") -> Dict[str, Any]:
