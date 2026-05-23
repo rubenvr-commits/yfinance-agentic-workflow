@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "generation-metrics",
+  "type": "object",
+  "properties": {
+    "ticker": {"type": "string"},
+    "duration_ms": {"type": "number"},
+    "attempts": {"type": "integer"},
+    "api_calls": {"type": "array", "items": {"type":"object"}},
+    "success": {"type": "boolean"}
+  },
+  "required": ["ticker","duration_ms","success"]
+}

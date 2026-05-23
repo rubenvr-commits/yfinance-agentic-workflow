@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "web-search.json schema",
+  "type": "object",
+  "required": ["metadata"],
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "required": ["ticker", "search_date"]
+    },
+    "vision": {"type": "object"},
+    "values": {"type": "object"},
+    "competitive_advantages": {"type": "object"},
+    "critical_decisions": {"type": "object"}
+  }
+}
