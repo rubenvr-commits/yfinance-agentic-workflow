@@ -1,403 +1,112 @@
 ﻿# YFinance Agentic Workflow
 
-Un sistema integrado de análisis de inversiones que combina datos de `yfinance`, búsquedas web estructuradas, agentes especializados y principios de inversión de Berkshire Hathaway mediante skills de GitHub Copilot.
+Plataforma de investigación financiera que combina `yfinance`, búsquedas web estructuradas, agentes especializados y reglas de valoración inspiradas en Berkshire Hathaway.
 
-## Vista Rápida
+## Resumen rápido
 
-El proyecto expone una app FastAPI en `app/`, un frontend estático en `web/` y un punto de entrada `run.py` para desarrollo local.
+- API en `app/` (FastAPI) y frontend estático en `web/`.
+- Punto de entrada: `run.py` para desarrollo local.
+- Salidas organizadas en `evaluaciones/{TICKER}/` (informes técnicos, fundamentales y de valoración).
 
-## Descripción General
+## Cambios recientes en este README
 
-Este repositorio es una plataforma de investigación financiera empresarial que automatiza el análisis de activos desde múltiples perspectivas:
+- Actualizado: requisitos de Python, comandos de inicio y guía mínima de contribución.
 
-- **Análisis técnico cuantitativo** con yfinance (precios, ratios, balance sheet)
-- **Investigación fundamental cualitativa** con Tavily API y NotebookLM
-- **Valoración según principios Berkshire Hathaway** (moat, management, margin of safety)
-- **Agentes especializados** para análisis automatizado y orquestación
-- **Skills reutilizables** de GitHub Copilot para cada componente
-- **Control de calidad automático** con pre-commit hooks
-- **Ejecución local** con FastAPI y frontend estático a través de `python run.py`
+## Requisitos mínimos
 
-## Componentes del Proyecto
-
-### Agentes Especializados (4)
-
-| Agente | Descripción | Caso de Uso |
-|--------|-------------|-----------|
-| **analista-financiero** | CFA Level III especializado en value investing | Análisis completo de activos con tesis de inversión |
-| **product-owner** | Especificaciones y requisitos de productos | Definir features, escribir user stories, revisar código |
-| **q-a-tester** | Creación automática de tests | Validar funcionalidad con casos de test mínimos |
-| **web-app-developer** | Desarrollo de interfaces web profesionales | Crear componentes React, dashboards, UIs production-ready |
-
-### Skills de GitHub Copilot (6)
-
-| Skill | Descripción | Entrada | Salida |
-|-------|-------------|---------|--------|
-| **yfinance-report** | Genera reportes técnicos financieros completos | Ticker (ej: AAPL, REP.MC) | `evaluaciones/{ticker}/informe-tecnico.md` |
-| **tavily-research** | Investigación web estructurada en 4 dimensiones | Ticker + empresa (ej: REP.MC, "Repsol, S.A.") | `evaluaciones/{ticker}/raw-search/web-search.json` |
-| **web-search-fundamentales** | Convierte JSON de búsqueda a informe markdown | `raw-search/web-search.json` | `evaluaciones/{ticker}/informe-fundamentales.md` |
-| **berkshire-valuation** | Análisis de valuación Buffett/Munger con NotebookLM | Informe técnico + contexto | `evaluaciones/{ticker}/informe-berkshire.md` |
-| **skill-creator** | Herramientas para crear y optimizar skills | Descripción de nueva skill | Skill empaquetada y lista para instalar |
-| **frontend-design** | UI/UX profesional para web (React, HTML/CSS) | Descripción de interfaz | Código component production-ready |
-
-### Sistema de Control de Calidad
-
-- **Pre-commit hooks automáticos** (`.github/hooks/pre-commit-validator.json`): Valida tests antes de commits
-- **Git hooks opcionales** (`.github/scripts/git-pre-commit`): Detección local de archivos sin tests
-- **Detección inteligente de tests**: Por nombre convencional, por importaciones, por ubicación relativa
-- **Protección de rama `main`**: Requiere rama de feature/fix antes de cambios
-- **Instrucciones de desarrollo** centralizadas en `.github/instructions/`
-
-## Estructura del Proyecto
-
-```
-yfinance-agentic-workflow/
-├── app/                                 # API FastAPI y lógica de negocio
-├── .github/
-│   ├── agents/                           # Agentes especializados
-│   │   ├── analista-financiero.agent.md
-│   │   ├── product-owner.agent.md
-│   │   ├── q-a-tester.agent.md
-│   │   └── web-app-developer.agent.md
-│   ├── hooks/                            # Pre-commit hooks
-│   │   ├── pre-commit-validator.json    # Hook automático de agent
-│   │   └── README.md                    # Documentación de hooks
-│   ├── instructions/                     # Reglas de desarrollo
-│   │   ├── branch-protection.instructions.md
-│   │   ├── no-emojis.instructions.md
-│   │   ├── test-detection.instructions.md
-│   │   └── test-location.instructions.md
-│   ├── scripts/                          # Scripts de utilidad
-│   │   ├── git-pre-commit               # Hook de git (opcional)
-│   │   └── validate_pre_commit.py       # Validador de pre-commit
-│   └── skills/                           # Skills de GitHub Copilot
-│       ├── berkshire-valuation/          # Análisis Berkshire
-│       ├── frontend-design/              # Interfaz web
-│       ├── skill-creator/                # Creador de skills
-│       ├── tavily-research/              # Investigación web
-│       ├── web-search-fundamentales/     # Conversión web a informe
-│       └── yfinance-report/              # Reportes técnicos
-├── evaluaciones/                         # Reportes generados
-│   ├── ^IBEX/                           # Índice IBEX-35
-│   ├── NVDA/                            # NVIDIA
-│   ├── REP.MC/                          # Repsol
-│   └── [ticker]/                        # Nuevas evaluaciones
-├── run.py                                # Arranque local del servidor
-├── tests/                                # Tests centralizados
-│   ├── test_pre_commit_validator.py
-│   ├── test_validator_integration.py
-│   ├── test_tavily_api_migration.py
-│   ├── test_researcher.py
-│   ├── test_utils.py
-│   ├── test_configuration_files.py
-│   ├── run_staged_tests.py
-│   └── run_tavily_tests.py
-├── .env                                  # Variables de entorno (privado)
-├── example.env                           # Ejemplo de configuración
-├── web/                                  # Frontend estático
-├── requirements.txt                      # Dependencias Python
-└── README.md                             # Este archivo
-```
-
-## API
-
-Rutas reales disponibles en `app/routes`:
-
-- `GET /health`
-- `GET /api/reports/{ticker}/status`
-- `GET /api/reports/{ticker}`
-- `POST /api/reports/{ticker}/generate`
-- `GET /api/reports/{ticker}/generate/progress`
-- `GET /api/reports/{ticker}/precios.csv`
-- `GET /api/reports/{ticker}/charts-data`
-- `GET /api/reports/{ticker}/informe-tecnico.md`
-- `GET /api/reports/{ticker}/informe-fundamentales.md`
-- `GET /api/reports/{ticker}/informe-berkshire.md`
-- `GET /api/reports/{ticker}/informe-final.md`
-
-## Cómo arrancar
-
-Para desarrollo local, ejecuta `python run.py` y abre `http://localhost:8000` para el frontend y `http://localhost:8000/docs` para la documentación de la API.
-
-## Evaluaciones Disponibles
-
-Actualmente disponibles estos análisis completos:
-
-- **^IBEX** - Índice IBEX-35 (informe-técnico.md, informe-berkshire.md)
-- **NVDA** - NVIDIA Corp (informe-técnico.md, informe-fundamentales.md, informe-berkshire.md)
-- **REP.MC** - Repsol, S.A. (informe-técnico.md, informe-fundamentales.md, informe-berkshire.md)
-
-## Reglas de Desarrollo
-
-Antes de modificar código, **lee obligatoriamente las reglas**:
-
-### 1. Protección de Rama `main`
-- **Nunca modifiques archivos directamente en `main`**
-- Siempre crea una rama nueva:
-  ```bash
-  git branch --show-current  # Verifica rama actual
-  git checkout -b feature/descripcion  # Para features
-  git checkout -b fix/descripcion      # Para bugs
-  ```
-
-### 2. Convención de Nombres de Rama
-| Tipo | Prefijo | Ejemplo |
-|------|---------|---------|
-| Nueva funcionalidad | `feature/` | `feature/add-valuation-engine` |
-| Corrección de bug | `fix/` | `fix/tavily-api-timeout` |
-| Refactor | `refactor/` | `refactor/portfolio-module` |
-| Documentación | `docs/` | `docs/update-skill-guide` |
-| Hotfix urgente | `hotfix/` | `hotfix/critical-auth-issue` |
-
-### 3. Ubicación Centralizada de Tests
-- **Todos los tests van en `tests/`** (no dispersos)
-- Nombres convencionales:
-  - `tests/test_nombre_modulo.py` (unit tests)
-  - `tests/test_nombre_integration.py` (integration tests)
-  - `tests/fixtures/` (datos de prueba)
-
-### 4. Detección Automática de Tests
-El pre-commit hook busca tests por:
-1. **Nombre convencional**: `tests/test_<módulo>.py`
-2. **Importación en tests**: Si algún archivo en `tests/` importa el módulo
-3. **Ubicación relativa**: Carpeta `tests/` al mismo nivel del módulo
-
-Ejemplo:
-```bash
-# Archivo a commitear
-.github/skills/tavily-research/scripts/utils.py
-
-# Tests detectados automáticamente si existe:
-tests/test_utils.py
-tests/test_tavily_api_migration.py (que importa utils)
-```
-
-### 5. No Usar Emojis
-- Todos los archivos deben ser texto claro y profesional
-- Elimina emojis antes de guardar
-
-## Primeros Pasos
-
-### Requisitos
-- Python 3.8+
+- Python 3.10+
 - Git
-- GitHub Copilot Chat (para usar agentes y skills)
 - Claves API: `TAVILY_API_KEY`, `NOTEBOOKLM_ID`
 
-### Instalación
+## Inicio rápido (desarrollo)
 
-1. **Clonar repositorio**:
-   ```bash
-   git clone <repository-url>
-   cd yfinance-agentic-workflow
-   ```
-
-2. **Crear entorno virtual**:
-   ```bash
-   python -m venv .venv
-   
-   # macOS/Linux
-   source .venv/bin/activate
-   
-   # Windows PowerShell
-   .venv\Scripts\Activate.ps1
-   ```
-
-3. **Instalar dependencias**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Configurar variables de entorno**:
-   ```bash
-   # Copiar archivo ejemplo
-   cp example.env .env  # Linux/macOS
-   # o
-   copy example.env .env  # Windows
-   ```
-   
-   Edita `.env` y añade:
-   - `TAVILY_API_KEY` - Obtén en https://app.tavily.com
-   - `NOTEBOOKLM_ID` - Ya está configurado en `example.env` (6904dc8b-742e-4192-82db-32e81e1f5e0f) y no es personalizable
-
-5. **Ejecutar la aplicación**:
-  ```bash
-  python run.py
-  ```
-
-## Flujo de Trabajo Recomendado
-
-### Escenario 1: Análisis Completo de un Nuevo Ticker (Using Analista Financiero)
+1. Clona el repositorio y sitúate en la carpeta:
 
 ```bash
-# Comando en GitHub Copilot Chat
-@analista-financiero Analiza AAPL con visión Berkshire
-
-# El agente orquesta automáticamente:
-# 1. Genera informe técnico con yfinance
-# 2. Ejecuta investigación web con Tavily
-# 3. Convierte búsqueda a informe de fundamentales
-# 4. Aplica análisis Berkshire Hathaway
-# 5. Produce tesis de inversión
-
-# Resultado: 4 archivos en evaluaciones/AAPL/
+git clone <repository-url>
+cd yfinance-agentic-workflow
 ```
 
-### Escenario 2: Crear Nueva Funcionalidad
+2. Crea y activa el entorno virtual:
 
 ```bash
-# 1. Crear rama de feature
-git checkout -b feature/add-momentum-analysis
-
-# 2. Implementar cambios
-# ... editar archivos ...
-
-# 3. Crear tests (automáticamente detectados)
-touch tests/test_momentum.py
-
-# 4. Pre-commit valida automáticamente
-git add .
-git commit -m "feat: add momentum analysis"
-# ✓ Hook detecta test_momentum.py y valida
-
-# 5. Push a rama de feature
-git push origin feature/add-momentum-analysis
+python -m venv .venv
+# Windows PowerShell
+.venv\\Scripts\\Activate.ps1
+# macOS/Linux
+source .venv/bin/activate
 ```
 
-### Escenario 3: Crear Nueva Skill
+3. Instala dependencias:
 
 ```bash
-# Solicita al agente skill-creator
-@skill-creator Crea una skill para análisis de opciones
-
-# El agente:
-# 1. Define estructura SKILL.md
-# 2. Genera scripts necesarios
-# 3. Empaqueta como skill instalable
-# 4. Proporciona instrucciones de instalación
+pip install -r requirements.txt
 ```
 
-## Flujo Típico de Análisis (Manual)
+4. Configura variables de entorno (Windows):
 
-### 1. Generar Reporte Técnico con yfinance
-
-```bash
-python .github/skills/yfinance-report/scripts/generate_report.py AAPL
-# → evaluaciones/AAPL/informe-tecnico.md
+```powershell
+copy example.env .env
+# Edita .env y añade tus claves
 ```
 
-### 2. Ejecutar Investigación Fundamental con Tavily
+5. Ejecuta la aplicación:
 
 ```bash
-python .github/skills/tavily-research/scripts/run_workflow.py \
-  --ticker REP.MC \
-  --company-name "Repsol, S.A." \
-  --sector "Energy / Oil & Gas"
-# → evaluaciones/REP.MC/raw-search/web-search.json
+python run.py
 ```
 
-### 3. Convertir Resultados Web a Informe
+Abre `http://localhost:8000` para el frontend y `http://localhost:8000/docs` para la API.
+
+## Estructura resumida del proyecto
+
+Vea las carpetas principales:
+
+- `app/`: código de la API y servicios
+- `.github/`: agentes, skills, hooks e instrucciones de desarrollo
+- `evaluaciones/`: informes generados por ticker
+- `tests/`: tests centralizados
+- `web/`: frontend estático
+
+## Buenas prácticas y contribución
+
+- No edites `main` directamente: crea una rama descriptiva (`feature/`, `fix/`, `docs/`).
+- Todos los tests deben residir en la carpeta `tests/`.
+- Pre-commit hooks validan la presencia de tests y convenciones del repo.
+
+Si vas a cambiar código, crea primero una rama y añade tests que cubran tu cambio.
+
+## Rutas principales de la API
+
+Algunas rutas expuestas por `app/routes`:
+
+- `GET /health`
+- `GET /api/reports/{ticker}`
+- `POST /api/reports/{ticker}/generate`
+- `GET /api/reports/{ticker}/informe-tecnico.md`
+
+Consulta `app/routes` para la lista completa.
+
+## Documentación y reglas de desarrollo
+
+Las reglas obligatorias están en `.github/instructions/` (protección de `main`, detección de tests, no usar emojis, etc.). Revísalas antes de contribuir.
+
+## Ejecutar tests
 
 ```bash
-python .github/skills/web-search-fundamentales/scripts/extract_fundamentales.py \
-  evaluaciones/REP.MC/raw-search/web-search.json
-# → evaluaciones/REP.MC/informe-fundamentales.md
-```
-
-### 4. Aplicar Valoración Berkshire Hathaway
-
-```bash
-python .github/skills/berkshire-valuation/scripts/notebooklm_client.py ask \
-  --notebook-id 6904dc8b-742e-4192-82db-32e81e1f5e0f \
-  --question "¿Cómo vería Buffett a Repsol con estos fundamentos?"
-# → evaluaciones/REP.MC/informe-berkshire.md
-```
-
-## Uso de Herramientas Principales
-
-### NotebookLM Client (Berkshire Valuation)
-
-```bash
-# Listar notebooks disponibles
-python .github/skills/berkshire-valuation/scripts/notebooklm_client.py list
-
-# Hacer pregunta al oráculo
-python .github/skills/berkshire-valuation/scripts/notebooklm_client.py ask \
-  --notebook-id <ID> \
-  --question "Tu pregunta aquí"
-```
-
-### Skill Creator (Crear Skills)
-
-```bash
-# Validar skill
-python .github/skills/skill-creator/scripts/quick_validate.py
-
-# Generar reporte de performance
-python .github/skills/skill-creator/scripts/generate_report.py
-
-# Empaquetar skill para instalar
-python .github/skills/skill-creator/scripts/package_skill.py
-```
-
-### Running Tests
-
-```bash
-# Ejecutar todos los tests
 python tests/run_staged_tests.py
-
-# Ejecutar tests de Tavily específicamente
-python tests/run_tavily_tests.py
 ```
 
-## Principios de Inversión Clave
+## Contribuir
 
-Este proyecto implementa la filosofía de inversión de Berkshire Hathaway:
-
-- **Moat Económico**: Identificar ventajas competitivas sostenibles
-- **Círculo de Competencia**: Invertir en negocios que se entienden profundamente
-- **Margen de Seguridad**: Evaluar conservadoramente riesgo vs. recompensa
-- **Calidad de Gestión**: Valorar integridad, visión y capital allocation
-- **Retorno sobre Capital**: Analizar ROE, ROIC y capacidad de reinversión
-- **Precio vs. Valor**: Buscar empresas cotizando por debajo del valor intrínseco
-
-## Ejecución Local
-
-El proyecto actualmente se ejecuta con FastAPI y el frontend estático mediante `python run.py`. No requiere Docker ni persistencia PostgreSQL para el flujo habitual del repositorio.
-
-## Documentación de Desarrollo
-
-Archivos de instrucción obligatorios en `.github/instructions/`:
-
-- `branch-protection.instructions.md` - Protección de main
-- `no-emojis.instructions.md` - Convención de texto
-- `test-location.instructions.md` - Ubicación de tests
-- `test-detection.instructions.md` - Detección automática
-
-## Notas de Configuración
-
-- `example.env` contiene ejemplo de configuración (no editar, usar para crear `.env`)
-- `.env` contiene claves privadas (no commitear, añadir a `.gitignore`)
-- `requirements.txt` incluye: yfinance, notebooklm-py, tavily-py, y más
-- Pre-commit hooks se auto-cargan en VS Code (no requiere instalación manual)
-
-## Ejemplo de Salida
-
-Los resultados se organizan como:
-```
-evaluaciones/{ticker}/
-├── informe-tecnico.md              # Análisis técnico yfinance
-├── informe-fundamentales.md        # Investigación cualitativa
-├── informe-berkshire.md            # Valoración Berkshire
-└── raw-search/
-    └── web-search.json             # JSON bruto de Tavily
-```
-
-Ejemplo: `evaluaciones/REP.MC/informe-berkshire.md`
+1. Crea una rama: `git checkout -b docs/update-readme`.
+2. Haz tus cambios y añade tests si aplican.
+3. Ejecuta los tests locales.
+4. Abre un Pull Request describiendo el cambio.
 
 ## Licencia
 
-Ver [LICENSE](LICENSE)
+Consulta el fichero [LICENSE](LICENSE).
 
 ## Contacto & Contribuciones
 
