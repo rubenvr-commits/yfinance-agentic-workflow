@@ -9,6 +9,7 @@ Verifica:
 
 import sys
 import unittest
+import tempfile
 from pathlib import Path
 
 # Agregar path al importar consolidate_reports
@@ -48,6 +49,36 @@ class TestConsolidateReports(unittest.TestCase):
             self.assertIn('nombre_empresa', data, "Debe extraer 'nombre_empresa'")
             self.assertIn('sector', data, "Debe extraer 'sector'")
             self.assertIn('precio_actual', data, "Debe extraer 'precio_actual'")
+
+    def test_generate_final_report_replaces_unicode_and_unknown_placeholders(self):
+        """Test: No deja placeholders crudos en plantillas con acentos o tokens desconocidos."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_dir_path = Path(temp_dir)
+            template_file = temp_dir_path / 'plantilla.md'
+            template_file.write_text(
+                """
+# Informe de Inversión - {{TICKER}}
+
+Resumen: {{PÁRRAFO_RESUMEN_30_PALABRAS}}
+Dato extra: {{MARCADOR_DESCONOCIDO}}
+Posición: {{MERCADO_POSICIÓN}}
+""",
+                encoding='utf-8',
+            )
+
+            consolidator = ReportConsolidator('evaluaciones/TEST')
+            consolidator.data = {
+                'ticker': 'TEST',
+                'resumen_ejecutivo': 'Empresa con flujo de caja estable, crecimiento consistente y balance sólido.',
+                'mercado_posicion': 'Top 1.20B',
+            }
+
+            report = consolidator.generate_final_report(str(template_file))
+
+            self.assertNotIn('{{', report)
+            self.assertIn('Empresa con flujo de caja estable', report)
+            self.assertIn('Top 1.20B', report)
+            self.assertIn('N/D', report)
 
 
 if __name__ == '__main__':

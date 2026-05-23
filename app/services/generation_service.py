@@ -13,6 +13,17 @@ from app.config import BASE_DIR
 from app.config import GENERATION_TIMEOUT_BASE, GENERATION_TIMEOUT_INCREMENT
 
 
+def build_agent_request_payload(ticker: str, timeout_seconds: int) -> dict:
+    """Build the queue payload for the Analista Financiero agent."""
+    return {
+        "command": "generate_reports",
+        "ticker": ticker,
+        "requested_by": "web_ui",
+        "timeout_seconds": timeout_seconds,
+        "status": "to do",
+    }
+
+
 def generate_metrics(ticker: str, background: bool = False, timeout_seconds: Optional[int] = None) -> bool:
     """
     Execute the metrics generation script for a ticker.
@@ -188,12 +199,7 @@ async def trigger_generation(ticker: str) -> dict:
         # Ensure evaluaciones/{ticker} exists
         report_dir.mkdir(parents=True, exist_ok=True)
 
-        request_payload = {
-            "command": "generate_reports",
-            "ticker": ticker,
-            "requested_by": "web_ui",
-            "timeout_seconds": timeout_seconds
-        }
+        request_payload = build_agent_request_payload(ticker, timeout_seconds)
 
         request_file = report_dir / "agent-request.json"
         with open(request_file, "w", encoding="utf-8") as f:

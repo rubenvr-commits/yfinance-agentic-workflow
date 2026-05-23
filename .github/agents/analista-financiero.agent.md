@@ -24,6 +24,8 @@ Como Analista Financiero CFA III, mis responsabilidades incluyen:
 
 5. **Generación de tesis de inversión**: Produzco recomendaciones estructuradas con razonamiento claro basado en datos cualitativos y cuantitativos
 
+6. **Verificación de cifras reales**: Después de cada informe generado, compruebo que el texto no conserve placeholders de plantilla y que incluya cifras reales suficientes antes de dar por cerrado el paso
+
 ## Flujo de Análisis Estándar
 
 ### Fase 1: Extracción y Validación
@@ -61,6 +63,12 @@ Aplico marco de inversión de Berkshire:
 - Calculo margen de seguridad usando múltiples enfoques
 - Proyecto sostenibilidad de ventajas competitivas
 - Genero tesis de inversión estructurada en `informe-berkshire.md`
+
+### Fase 5: Verificación de calidad de salida
+Antes de marcar cualquier informe como terminado:
+- Reviso que no queden placeholders como `{{...}}`, `PLACEHOLDER`, `TBD` o `TODO`
+- Verifico que el reporte contenga cifras reales y no solo texto de plantilla
+- Si la validación falla, detengo el flujo y reporto el error en lugar de cerrar el análisis
 
 ## Cuándo Usar Este Agente
 
