@@ -26,15 +26,19 @@ def generate_metrics(ticker: str, background: bool = False, timeout_seconds: Opt
     try:
         # Path to the metrics generation script
         script_path = (
-            BASE_DIR / ".github" / "skills" / "yfinance-report" / 
+            BASE_DIR / ".github" / "skills" / "yfinance-report" /
             "scripts" / "generate_metrics_from_yfinance.py"
         )
-        
+
         if not script_path.exists():
             print(f"Warning: Metrics generation script not found at {script_path}")
             return False
-        
+
         # Execute the script with the ticker
+        if not ticker or not str(ticker).strip():
+            print("Invalid ticker for metrics generation")
+            return False
+
         if background:
             # Start in background and don't wait
             try:
@@ -46,28 +50,28 @@ def generate_metrics(ticker: str, background: bool = False, timeout_seconds: Opt
             except Exception as e:
                 print(f"Failed to start background metrics generation for {ticker}: {e}")
                 return False
-            else:
-            # Use provided timeout_seconds or default to 60
-                run_timeout = timeout_seconds if timeout_seconds is not None else 60
-                
-                result = subprocess.run(
-                    [sys.executable, str(script_path), ticker],
-                    capture_output=True,
-                    text=True,
-                    timeout=run_timeout
-                )
-                
-            if result.returncode == 0:
-                print(f"Metrics generated successfully for {ticker}")
-                if result.stdout:
-                    print(result.stdout)
-                return True
-            else:
-                print(f"Error generating metrics for {ticker}")
-                if result.stderr:
-                    print(f"Error details: {result.stderr}")
-                return False
-                
+
+        # Foreground execution: use provided timeout_seconds or default to 60
+        run_timeout = timeout_seconds if timeout_seconds is not None else 60
+
+        result = subprocess.run(
+            [sys.executable, str(script_path), ticker],
+            capture_output=True,
+            text=True,
+            timeout=run_timeout
+        )
+
+        if result.returncode == 0:
+            print(f"Metrics generated successfully for {ticker}")
+            if result.stdout:
+                print(result.stdout)
+            return True
+        else:
+            print(f"Error generating metrics for {ticker}")
+            if result.stderr:
+                print(f"Error details: {result.stderr}")
+            return False
+
     except subprocess.TimeoutExpired:
         print(f"Metrics generation timeout for {ticker}")
         return False
