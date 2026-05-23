@@ -8,8 +8,8 @@ const errorText = document.getElementById('errorText');
 
 // Validate ticker format
 function validateTicker(ticker) {
-    // Allow an optional leading '^' (for indices like ^GSPC), followed by 1-6 chars
-    const pattern = /^\^?[A-Z0-9.]{1,6}$/;
+    // Allow an optional leading '^' (for indices like ^GSPC), followed by 1-8 chars
+    const pattern = /^\^?[A-Z0-9.]{1,8}$/;
     return pattern.test(ticker.toUpperCase());
 }
 
