@@ -5,7 +5,11 @@
         "type": "command",
         "command": "python .github/scripts/validate_pre_commit.py",
         "cwd": ".",
-        "timeout": 30,
+        "timeout": 120,
+        "allowed_commands": [
+          "python .github/scripts/validate_pre_commit.py"
+        ],
+        "transcript_dir": ".github/hooks/logs/pre_commit_validator",
         "description": "Validate code quality before git commit - runs Q&A Tester on changed files"
       }
     ]

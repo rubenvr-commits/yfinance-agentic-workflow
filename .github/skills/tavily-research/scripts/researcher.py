@@ -169,6 +169,9 @@ class TavilyResearcherAPI:
             if search_result.get("results") and len(search_result["results"]) >= 1:
                 result["results"] = search_result["results"]
                 result["query_used"] = broad_query
+                # attach request metrics if provided by client
+                if isinstance(search_result, dict) and search_result.get("request_metrics"):
+                    result["request_metrics"] = search_result.get("request_metrics")
                 result["status"] = "completed"
                 print(f"      [OK] Found {len(result['results'])} results")
             else:
@@ -182,6 +185,9 @@ class TavilyResearcherAPI:
                     if focused_result.get("results"):
                         result["results"].extend(focused_result["results"])
                         result["query_used"] = focused_query
+                        if focused_result.get("request_metrics"):
+                            # merge or attach metrics for focused query
+                            result.setdefault("request_metrics", {})[focused_query] = focused_result.get("request_metrics")
                         result["status"] = "completed"
                         print(f"      [OK] Found {len(focused_result['results'])} results")
                         
@@ -223,19 +229,23 @@ class TavilyResearcherAPI:
             },
             "vision": {
                 "query_used": self.all_results.get("vision", {}).get("query_used"),
-                "results": self.all_results.get("vision", {}).get("results", [])
+                "results": self.all_results.get("vision", {}).get("results", []),
+                "request_metrics": self.all_results.get("vision", {}).get("request_metrics")
             },
             "values": {
                 "query_used": self.all_results.get("values", {}).get("query_used"),
-                "results": self.all_results.get("values", {}).get("results", [])
+                "results": self.all_results.get("values", {}).get("results", []),
+                "request_metrics": self.all_results.get("values", {}).get("request_metrics")
             },
             "competitive_advantages": {
                 "query_used": self.all_results.get("competitive_advantages", {}).get("query_used"),
-                "results": self.all_results.get("competitive_advantages", {}).get("results", [])
+                "results": self.all_results.get("competitive_advantages", {}).get("results", []),
+                "request_metrics": self.all_results.get("competitive_advantages", {}).get("request_metrics")
             },
             "critical_decisions": {
                 "query_used": self.all_results.get("critical_decisions", {}).get("query_used"),
-                "results": self.all_results.get("critical_decisions", {}).get("results", [])
+                "results": self.all_results.get("critical_decisions", {}).get("results", []),
+                "request_metrics": self.all_results.get("critical_decisions", {}).get("request_metrics")
             }
         }
         

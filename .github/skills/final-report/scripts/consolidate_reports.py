@@ -9,6 +9,7 @@ import os
 import re
 import sys
 import json
+import unicodedata
 from pathlib import Path
 from typing import Dict, Any, Optional
 
@@ -22,6 +23,96 @@ class ReportConsolidator:
         self.berkshire_file = self.ticker_dir / "informe-berkshire.md"
         self.output_file = self.ticker_dir / "informe-final.md"
         self.data = {}
+
+    def _normalize_placeholder(self, value: str) -> str:
+        normalized = unicodedata.normalize('NFKD', value)
+        normalized = normalized.encode('ascii', 'ignore').decode('ascii')
+        normalized = re.sub(r'[^A-Za-z0-9]+', '_', normalized).strip('_').lower()
+        return normalized
+
+    def _stringify_value(self, value: Any) -> str:
+        if isinstance(value, list):
+            items = [str(item).strip() for item in value if str(item).strip() and str(item).strip() != 'N/D']
+            return "\n".join([f"- {item}" for item in items]) if items else "N/D"
+
+        if value is None:
+            return "N/D"
+
+        text = str(value).strip()
+        return text if text else "N/D"
+
+    def _truncate_words(self, text: str, limit: int) -> str:
+        words = re.split(r'\s+', text.strip()) if text else []
+        if not words:
+            return "N/D"
+        if len(words) <= limit:
+            return " ".join(words)
+        return " ".join(words[:limit]).rstrip(',.') + '...'
+
+    def _derive_placeholder_value(self, placeholder_key: str) -> str:
+        if placeholder_key == 'parrafo_resumen_30_palabras':
+            return self._truncate_words(self.data.get('resumen_ejecutivo', ''), 30)
+        if placeholder_key == 'parrafo_gestion_50_palabras':
+            base_text = self.data.get('tesis_ejecutiva', '') or self.data.get('valores', '')
+            return self._truncate_words(base_text, 50)
+        if placeholder_key == 'parrafo_vision_60_palabras':
+            return self._truncate_words(self.data.get('vision_resumen', ''), 60)
+        if placeholder_key == 'parrafo_drivers_50_palabras':
+            base_text = self.data.get('tesis_ejecutiva', '') or self.data.get('vision_resumen', '')
+            return self._truncate_words(base_text, 50)
+
+        if placeholder_key == 'nivel_confianza':
+            filled_values = sum(1 for value in self.data.values() if self._stringify_value(value) != 'N/D')
+            return str(min(10, max(1, 3 + filled_values // 8)))
+
+        if placeholder_key == 'mercado_posicion_detalle':
+            return self._stringify_value(self.data.get('mercado_posicion'))
+
+        if placeholder_key == 'valoracion_vs_sector':
+            return self._stringify_value(self.data.get('valoracion_vs_sector', self._interpret_pe()))
+
+        if placeholder_key == 'crecimiento_implicado':
+            return self._stringify_value(self.data.get('crecimiento_implicado', 'N/D'))
+
+        if placeholder_key == 'interpretacion_peg':
+            return self._stringify_value(self.data.get('interpretacion_peg', 'N/D'))
+
+        if placeholder_key == 'rentabilidad_activos':
+            return self._stringify_value(self.data.get('rentabilidad_activos', 'N/D'))
+
+        if placeholder_key == 'composicion_retorno':
+            return self._stringify_value(self.data.get('composicion_retorno', 'N/D'))
+
+        if placeholder_key == 'calidad_capital':
+            return self._stringify_value(self.data.get('calidad_capital', 'N/D'))
+
+        if placeholder_key == 'solidez_balance':
+            return self._stringify_value(self.data.get('solidez_balance', 'N/D'))
+
+        if placeholder_key == 'durabilidad_anos':
+            return self._stringify_value(self.data.get('durabilidad_anos', 'N/D'))
+
+        if placeholder_key == 'margen_ventaja':
+            return self._stringify_value(self.data.get('margen_ventaja', 'N/D'))
+
+        if placeholder_key == 'razon_ventaja':
+            return self._stringify_value(self.data.get('razon_ventaja', 'N/D'))
+
+        if placeholder_key == 'analista':
+            return 'analista-financiero'
+
+        return 'N/D'
+
+    def _resolve_template_value(self, placeholder_name: str) -> str:
+        normalized_key = self._normalize_placeholder(placeholder_name)
+        data_lookup = {
+            self._normalize_placeholder(key): value for key, value in self.data.items()
+        }
+
+        if normalized_key in data_lookup:
+            return self._stringify_value(data_lookup[normalized_key])
+
+        return self._derive_placeholder_value(normalized_key)
 
     def validate_files(self) -> bool:
         """Verifica que existan los 3 informes."""
@@ -303,59 +394,13 @@ class ReportConsolidator:
             template = f.read()
         
         print(f"DEBUG: Plantilla cargada de {template_file}")
-        
-        # Mapeo de placeholders de plantilla a keys de self.data
-        placeholder_mapping = {
-            'TICKER': 'ticker',
-            'NOMBRE_EMPRESA': 'nombre_empresa',
-            'SECTOR': 'sector',
-            'INDUSTRIA': 'industria',
-            'FECHA_ANÁLISIS': 'fecha_analisis',
-            'RECOMENDACIÓN': 'recomendacion',
-            'PRECIO_ACTUAL': 'precio_actual',
-            'CAMBIO_PORCENTUAL': 'cambio_porcentual',
-            'MARKET_CAP_B': 'market_cap_b',
-            'PE_TRAILING': 'pe_trailing',
-            'PE_FORWARD': 'pe_forward',
-            'PEG_RATIO': 'peg_ratio',
-            'PRICE_TO_BOOK': 'price_to_book',
-            'DIVIDEND_YIELD': 'dividend_yield',
-            'MOAT_RATING': 'moat_rating',
-            'TIPO_MOAT': 'tipo_moat',
-            'MARKET_SHARE': 'market_share',
-            'PRECIO_OBJETIVO_MIN': 'precio_objetivo_min',
-            'PRECIO_OBJETIVO_MAX': 'precio_objetivo_max',
-            'MARGEN_SEGURIDAD': 'margen_seguridad',
-        }
-        
-        # Reemplazar cada placeholder
-        report = template
-        replaced_count = 0
-        for placeholder, data_key in placeholder_mapping.items():
-            value = self.data.get(data_key, "N/D")
-            
-            # Si es una lista, unir con saltos de línea
-            if isinstance(value, list):
-                value_str = "\n".join([f"- {v}" for v in value if v != "N/D"])
-            else:
-                value_str = str(value) if value else "N/D"
-            
-            # Reemplazar el placeholder (sin espacios adicionales)
-            pattern = f"{{{{{placeholder}}}}}"  # {{ PLACEHOLDER }}
-            old_report = report
-            report = report.replace(pattern, value_str)
-            if report != old_report:
-                replaced_count += 1
-                if len(value_str) > 50:
-                    print(f"DEBUG: Reemplazado {placeholder} -> {value_str[:50]}...")
-                else:
-                    print(f"DEBUG: Reemplazado {placeholder} -> {value_str}")
-        
-        print(f"DEBUG: Total placeholders reemplazados: {replaced_count}/{len(placeholder_mapping)}")
-        
-        # Reemplazar variables restantes que no se hayan mapificado con N/D
-        report = re.sub(r'\{\{\s*[A-Z_]+\s*\}\}', 'N/D', report)
-        
+
+        def replace_placeholder(match: re.Match[str]) -> str:
+            placeholder_name = match.group(1).strip()
+            return self._resolve_template_value(placeholder_name)
+
+        report = re.sub(r'\{\{\s*([^{}]+?)\s*\}\}', replace_placeholder, template)
+
         return report
 
     def save_report(self, report_content: str) -> None:

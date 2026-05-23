@@ -1,7 +1,7 @@
 ---
 name: tavily-research
 description: "Research a financial asset across four key dimensions using Tavily API: long-term vision, corporate values, competitive advantages, and critical management decisions. Trigger on user requests like 'investigar', 'analizar', 'buscar info', 'research ticker', 'analyze company', or when they mention a stock ticker and want comprehensive web research. Outputs structured JSON with investigation results to evaluaciones/{ticker}/raw-search/web-search.json. Uses HTTP API for reliable, scalable search integration."
-compatibility: "Python 3.8+, requests library, TAVILY_API_KEY environment variable"
+compatibility: "Python 3.8+, requests library, TAVILY_API_KEY environment variable or project root .env"
 ---
 
 # Tavily Research Skill (API)
@@ -86,6 +86,7 @@ Trigger this skill when users ask to:
 
 ### Step 1: Initialize API Client
 - Read `TAVILY_API_KEY` from environment
+- If missing, read it from the repository root `.env`
 - Validate API key availability
 - Prepare HTTP headers for Tavily API requests
 
@@ -219,7 +220,9 @@ pip install mcp  # MCP SDK (if not using stdio directly)
 - Network connectivity to Tavily servers (through MCP)
 
 ### Configuration
-- Set the `TAVILY_API_KEY` environment variable before running the skill.
+- The skill reads `TAVILY_API_KEY` from the process environment first.
+- If the variable is not set, it falls back to the repository root `.env` file.
+- Keep the key in `/.env` at the project root when you want local, file-based configuration.
 
   Example (PowerShell):
   ```powershell

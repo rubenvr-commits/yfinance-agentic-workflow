@@ -38,6 +38,7 @@ class GenerationStatus(BaseModel):
     current_phase: Optional[str] = None
     progress_percent: int = 0
     message: Optional[str] = None
+    suggested_timeout_seconds: Optional[int] = None
 
 
 class GenerationResult(BaseModel):
@@ -46,3 +47,11 @@ class GenerationResult(BaseModel):
     ticker: str
     url: Optional[str] = None
     message: Optional[str] = None
+
+
+class ReportListItem(BaseModel):
+    """Item for listing available reports."""
+    ticker: str
+    exists: bool
+    generated_date: Optional[str] = None
+    age_days: Optional[int] = None

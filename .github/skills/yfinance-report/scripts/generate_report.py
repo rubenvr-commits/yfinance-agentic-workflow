@@ -490,18 +490,37 @@ def build_technical_section(ticker_symbol, history_data):
 
 def fetch_ticker_data(ticker_symbol):
     """Fetch financial data from yfinance."""
-    try:
-        ticker = yf.Ticker(ticker_symbol)
-        info = ticker.info
-        
-        if not info or "symbol" not in info:
-            print(f"Error: Could not fetch data for ticker {ticker_symbol}")
-            return None
-        
-        return ticker, info
-    except Exception as e:
-        print(f"Error fetching data for {ticker_symbol}: {e}")
-        return None
+    # Try to fetch ticker info with retries/backoff and record minimal metrics
+    max_attempts = 3
+    backoff = 1.0
+    attempts = []
+    for attempt in range(1, max_attempts + 1):
+        t0 = datetime.now()
+        try:
+            ticker = yf.Ticker(ticker_symbol)
+            info = ticker.info
+
+            if not info or "symbol" not in info:
+                attempts.append({"attempt": attempt, "ok": False, "reason": "no_info"})
+                raise RuntimeError(f"No info for {ticker_symbol}")
+
+            # success
+            attempts.append({"attempt": attempt, "ok": True, "duration_ms": int((datetime.now() - t0).total_seconds() * 1000)})
+            # attach metrics to ticker object for downstream use
+            try:
+                ticker._fetch_metrics = {"info_fetch": {"attempts": attempts}}
+            except Exception:
+                pass
+            return ticker, info
+
+        except Exception as e:
+            attempts.append({"attempt": attempt, "ok": False, "error": str(e)})
+            if attempt < max_attempts:
+                import time as _time
+                _time.sleep(backoff * (2 ** (attempt - 1)))
+            else:
+                print(f"Error fetching data for {ticker_symbol}: {e}")
+                return None
 
 
 def _fetch_history_cache(ticker):
@@ -521,6 +540,7 @@ def _fetch_history_cache(ticker):
         Returns empty dict on complete failure.
     """
     history_cache = {}
+    fetch_metrics = {}
     
     # Periods needed for technical analysis (short-term)
     technical_periods = ["1mo", "3mo", "6mo", "1y"]
@@ -532,21 +552,39 @@ def _fetch_history_cache(ticker):
     all_periods = list(dict.fromkeys(technical_periods + ratio_periods))
     
     for period_str in all_periods:
-        try:
-            history_cache[period_str] = ticker.history(period=period_str)
-        except Exception as e:
-            print(f"Error fetching history for {period_str}: {e}")
+        period_attempts = []
+        success = False
+        for attempt in range(1, 4):
+            t0 = datetime.now()
+            try:
+                df = ticker.history(period=period_str)
+                duration_ms = int((datetime.now() - t0).total_seconds() * 1000)
+                if df is not None:
+                    history_cache[period_str] = df
+                    fetch_metrics[period_str] = {"attempts": attempt, "duration_ms": duration_ms, "success": True}
+                    success = True
+                    break
+                else:
+                    period_attempts.append({"attempt": attempt, "error": "empty_dataframe", "duration_ms": duration_ms})
+            except Exception as e:
+                duration_ms = int((datetime.now() - t0).total_seconds() * 1000)
+                period_attempts.append({"attempt": attempt, "error": str(e), "duration_ms": duration_ms})
+                import time as _time
+                _time.sleep(1 * (2 ** (attempt - 1)))
+
+        if not success:
             history_cache[period_str] = pd.DataFrame()
-    
-    return history_cache
+            fetch_metrics[period_str] = {"attempts": len(period_attempts), "success": False, "errors": period_attempts}
+
+    return history_cache, fetch_metrics
 
 
 def build_data_dict(ticker_symbol, ticker, info):
     """Build dictionary with all fields for template filling."""
 
     # Fetch and cache historical data to avoid duplicate ticker.history() calls
-    history_cache = _fetch_history_cache(ticker)
-    
+    history_cache, fetch_metrics = _fetch_history_cache(ticker)
+
     if not history_cache:
         print(f"Warning: No history data available for {ticker_symbol}")
         history_cache = {}
@@ -736,7 +774,13 @@ def build_data_dict(ticker_symbol, ticker, info):
     country = safe_get(info, "country", "país desconocido")
     data.update(build_swot_from_metrics(info, sector, country))
     
-    return data
+    # return data plus history cache and fetch metrics for downstream
+    try:
+        data["_internal_fetch_metrics"] = fetch_metrics
+    except Exception:
+        pass
+
+    return data, history_cache, fetch_metrics
 
 
 def _to_float_safe(value):
@@ -775,7 +819,7 @@ def _extract_price_history(ticker, history_cache):
     return price_data_6m, price_data_12m
 
 
-def _build_metrics_json(ticker_symbol, ticker, info, history_cache):
+def _build_metrics_json(ticker_symbol, ticker, info, history_cache, fetch_metrics=None):
     """Build JSON structure with quantitative metrics."""
     
     # Extract current price
@@ -831,6 +875,17 @@ def _build_metrics_json(ticker_symbol, ticker, info, history_cache):
             "pe_sp500": pe_sp500
         }
     }
+    # Attach execution metrics if available
+    if fetch_metrics:
+        metrics_json["execution_metrics"] = {"history_fetch": fetch_metrics}
+    else:
+        # attempt to get metrics from ticker object
+        try:
+            obj_metrics = getattr(ticker, '_fetch_metrics', None)
+            if obj_metrics:
+                metrics_json["execution_metrics"] = obj_metrics
+        except Exception:
+            pass
     
     return metrics_json
 
@@ -847,9 +902,8 @@ def generate_report(ticker_symbol):
     ticker, info = result
     print(f"[+] Data fetched for {info.get('longName', ticker_symbol)}")
     
-    # Build data dictionary
-    data = build_data_dict(ticker_symbol, ticker, info)
-    history_cache = _fetch_history_cache(ticker)
+    # Build data dictionary (also fetch history cache and fetch metrics)
+    data, history_cache, fetch_metrics = build_data_dict(ticker_symbol, ticker, info)
     
     # Find and read template
     script_dir = Path(__file__).parent
@@ -889,7 +943,7 @@ def generate_report(ticker_symbol):
     
     # Generate and save metrics JSON
     try:
-        metrics_json = _build_metrics_json(ticker_symbol, ticker, info, history_cache)
+        metrics_json = _build_metrics_json(ticker_symbol, ticker, info, history_cache, fetch_metrics)
         
         # Create raw-search directory
         raw_search_dir = output_dir / "raw-search"

@@ -1,10 +1,12 @@
 """Report endpoints."""
 
 from fastapi import APIRouter, HTTPException, Response
-from typing import Optional
+from typing import Optional, List
 from pathlib import Path
+from app.config import REPORTS_DIR
 
 from app.models import ReportStatus, ReportResponse, GenerationStatus, GenerationResult
+from app.models import ReportListItem
 from app.services.report_service import get_report_status, get_report_data, get_price_history
 from app.services.generation_service import trigger_generation, get_generation_progress
 from app.services.csv_service import generate_price_csv
@@ -14,8 +16,18 @@ router = APIRouter(prefix="/api/reports", tags=["reports"])
 
 def validate_ticker(ticker: str) -> str:
     """Validate and normalize ticker."""
-    if not ticker or not all(c.isalnum() or c == '.' for c in ticker):
+    if not ticker:
         raise HTTPException(status_code=400, detail="Invalid ticker format")
+
+    # Allow optional leading '^' for indices (e.g., ^GSPC)
+    if ticker[0] == '^':
+        core = ticker[1:]
+    else:
+        core = ticker
+
+    if not core or not all(c.isalnum() or c == '.' for c in core):
+        raise HTTPException(status_code=400, detail="Invalid ticker format")
+
     return ticker.upper()
 
 
@@ -151,3 +163,23 @@ async def get_final_report(ticker: str):
         return Response(content=content, media_type="text/markdown")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error reading report: {str(e)}")
+
+
+
+@router.get("", response_model=List[ReportListItem])
+@router.get("/", response_model=List[ReportListItem])
+async def list_reports():
+    """List available tickers in evaluaciones/ with basic metadata."""
+    base = REPORTS_DIR
+    if not base.exists():
+        return []
+
+    items = []
+    for p in sorted(base.iterdir(), key=lambda x: x.name.lower()):
+        if not p.is_dir():
+            continue
+        ticker = p.name
+        status = get_report_status(ticker)
+        items.append({"ticker": ticker, **status})
+
+    return items

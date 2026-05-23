@@ -1,5 +1,7 @@
 """FastAPI main application."""
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -7,11 +9,22 @@ from pathlib import Path
 
 from app.routes import health, reports
 from app.config import DEBUG
+from app.services.agent_service import start_analista_agent, stop_analista_agent
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    start_analista_agent()
+    try:
+        yield
+    finally:
+        stop_analista_agent()
 
 app = FastAPI(
     title="Financial Reports API",
     description="API for financial reports and analysis",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan,
 )
 
 # CORS middleware

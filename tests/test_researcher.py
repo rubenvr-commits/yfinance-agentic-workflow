@@ -15,7 +15,7 @@ scripts_dir = Path(__file__).parent.parent / ".github" / "skills" / "tavily-rese
 sys.path.insert(0, str(scripts_dir))
 
 
-def test_tavily_researcher_api_initialization():
+def test_tavily_researcher_api_initialization(tmp_path):
     """Test 1: TavilyResearcherAPI initializes with ticker and company name."""
     from researcher import TavilyResearcherAPI
     
@@ -23,7 +23,8 @@ def test_tavily_researcher_api_initialization():
         researcher = TavilyResearcherAPI(
             ticker="AAPL",
             company_name="Apple Inc.",
-            sector="Technology"
+            sector="Technology",
+            output_dir=tmp_path
         )
         
         assert researcher.ticker == "AAPL", "Ticker not set correctly"
@@ -35,12 +36,12 @@ def test_tavily_researcher_api_initialization():
     print("PASS: TavilyResearcherAPI initializes correctly")
 
 
-def test_tavily_researcher_api_output_structure():
+def test_tavily_researcher_api_output_structure(tmp_path):
     """Test 2: TavilyResearcherAPI builds correct output JSON structure."""
     from researcher import TavilyResearcherAPI
     
     with patch.dict(os.environ, {"TAVILY_API_KEY": "test-api-key"}):
-        researcher = TavilyResearcherAPI(ticker="TEST", company_name="Test Corp")
+        researcher = TavilyResearcherAPI(ticker="TEST", company_name="Test Corp", output_dir=tmp_path)
         
         # Mock client search results
         mock_result = {

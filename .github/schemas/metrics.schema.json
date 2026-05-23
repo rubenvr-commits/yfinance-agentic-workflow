@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "metrics.json schema",
+  "type": "object",
+  "required": ["ticker", "fecha", "precios_historicos"],
+  "properties": {
+    "ticker": {"type": "string"},
+    "fecha": {"type": "string", "format": "date"},
+    "precio_actual": {"type": ["number", "null"]},
+    "precios_historicos": {
+      "type": "object",
+      "properties": {
+        "ultimos_6m": {
+          "type": "array",
+          "items": {"type": "object", "required": ["date", "close"]}
+        },
+        "ultimos_12m": {
+          "type": "array",
+          "items": {"type": "object", "required": ["date", "close"]}
+        }
+      }
+    },
+    "valuations": {"type": "object"},
+    "performance": {"type": "object"},
+    "execution_metrics": {"type": ["object", "null"]}
+  }
+}

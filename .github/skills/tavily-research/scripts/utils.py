@@ -9,15 +9,16 @@ results to a consistent schema.
 import json
 import os
 import sys
+import time
+from pathlib import Path
 from typing import Dict, List, Optional, Any
 import logging
 import requests
 
-# Fix encoding for Windows console (UTF-8 instead of charmap)
-if sys.platform == 'win32':
-    import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+# Avoid reassigning sys.stdout/stderr globally during import; pytest
+# replaces these streams for capture and reassigning them here can
+# cause I/O errors. If a script needs specific console encoding,
+# handle it at runtime (e.g., under __main__) instead.
 
 logging.basicConfig(
     level=logging.INFO,
@@ -56,12 +57,54 @@ class TavilyAPIClient:
             # Get Tavily API key from environment
             self.api_key = os.environ.get('TAVILY_API_KEY')
             if not self.api_key:
-                raise RuntimeError("TAVILY_API_KEY environment variable is required")
+                self.api_key = self._load_api_key_from_root_env()
+                if self.api_key:
+                    os.environ['TAVILY_API_KEY'] = self.api_key
+                    logger.info("Loaded Tavily API key from project root .env")
+
+            if not self.api_key:
+                raise RuntimeError("TAVILY_API_KEY not found in environment or project root .env")
             
             logger.info("[OK] Tavily API client initialized successfully")
         except Exception as e:
             logger.error(f"[ERROR] Failed to initialize API client: {e}")
             raise
+
+
+    @staticmethod
+    def _load_api_key_from_root_env() -> Optional[str]:
+        """Load TAVILY_API_KEY from the repository root .env file."""
+        env_path = None
+
+        for parent in Path(__file__).resolve().parents:
+            candidate = parent / ".env"
+            if candidate.exists():
+                env_path = candidate
+                break
+
+        if env_path is None:
+            return None
+
+        try:
+            with env_path.open("r", encoding="utf-8") as handle:
+                for raw_line in handle:
+                    line = raw_line.strip()
+                    if not line or line.startswith("#"):
+                        continue
+
+                    if line.startswith("export "):
+                        line = line[len("export "):].strip()
+
+                    if "=" not in line:
+                        continue
+
+                    key, value = line.split("=", 1)
+                    if key.strip() == "TAVILY_API_KEY":
+                        return value.strip().strip('"').strip("'") or None
+        except Exception as exc:
+            logger.warning(f"Failed to read Tavily API key from {env_path}: {exc}")
+
+        return None
     
     
     def search_criterion(self, query: str, max_results: int = 3, search_depth: str = "basic") -> Dict[str, Any]:
@@ -82,66 +125,89 @@ class TavilyAPIClient:
             "query_used": query,
             "error": None
         }
-        
-        try:
-            logger.info(f"Searching with Tavily API (depth={search_depth}): {query[:60]}...")
-            
-            # Prepare API request
-            payload = {
-                "api_key": self.api_key,
-                "query": query,
-                "include_answer": True,
-                "search_depth": search_depth,
-                "max_results": max_results
-            }
-            
-            # Make HTTP request to Tavily API
-            response = requests.post(
-                self.API_ENDPOINT,
-                json=payload,
-                timeout=self.timeout
-            )
-            
-            # Check for HTTP errors
-            if response.status_code != 200:
-                logger.warning(f"API returned status {response.status_code}: {response.text}")
-                results["status"] = "error"
-                results["error"] = f"HTTP {response.status_code}"
-                return results
-            
-            # Parse response
-            api_response = response.json()
-            
-            # Check for API-level errors
-            if api_response.get('success') is False:
-                logger.warning(f"API error: {api_response.get('error', 'Unknown error')}")
-                results["status"] = "error"
-                results["error"] = api_response.get('error', 'Unknown error')
-                return results
-            
-            # Normalize results
-            normalized_results = self._normalize_results(api_response)
-            results["results"] = normalized_results
-            results["status"] = "completed"
-            logger.info(f"[OK] Found {len(normalized_results)} results")
-        
-        except requests.exceptions.Timeout:
-            results["status"] = "error"
-            results["error"] = f"Request timeout after {self.timeout}s"
-            logger.error(f"Request timeout: {results['error']}")
-        except requests.exceptions.RequestException as e:
-            results["status"] = "error"
-            results["error"] = str(e)
-            logger.error(f"Network error: {e}")
-        except json.JSONDecodeError as e:
-            results["status"] = "error"
-            results["error"] = "Invalid JSON response"
-            logger.error(f"JSON decode error: {e}")
-        except Exception as e:
-            results["status"] = "error"
-            results["error"] = str(e)
-            logger.error(f"Search error: {e}")
-        
+
+        # Retry/backoff parameters
+        max_attempts = 3
+        base_backoff = 1.0
+        start_time = time.time()
+        attempt_errors = []
+
+        logger.info(f"Searching with Tavily API (depth={search_depth}): {query[:60]}...")
+
+        payload = {
+            "api_key": self.api_key,
+            "query": query,
+            "include_answer": True,
+            "search_depth": search_depth,
+            "max_results": max_results
+        }
+
+        for attempt in range(1, max_attempts + 1):
+            t0 = time.time()
+            try:
+                response = requests.post(
+                    self.API_ENDPOINT,
+                    json=payload,
+                    timeout=self.timeout
+                )
+
+                duration_ms = int((time.time() - t0) * 1000)
+                status_code = getattr(response, 'status_code', None)
+
+                if status_code != 200:
+                    msg = f"HTTP {status_code}: {response.text[:200]}"
+                    logger.warning(msg)
+                    attempt_errors.append({"attempt": attempt, "status_code": status_code, "msg": msg, "duration_ms": duration_ms})
+                    # backoff and retry
+                else:
+                    # parse JSON and check API-level success
+                    api_response = response.json()
+                    if api_response.get('success') is False:
+                        err = api_response.get('error', 'Unknown error')
+                        logger.warning(f"API error: {err}")
+                        attempt_errors.append({"attempt": attempt, "status_code": status_code, "error": err, "duration_ms": duration_ms})
+                    else:
+                        normalized_results = self._normalize_results(api_response)
+                        results["results"] = normalized_results
+                        results["status"] = "completed"
+                        results["request_metrics"] = {
+                            "attempts": attempt,
+                            "total_duration_ms": int((time.time() - start_time) * 1000),
+                            "last_status_code": status_code
+                        }
+                        logger.info(f"[OK] Found {len(normalized_results)} results")
+                        return results
+
+            except requests.exceptions.Timeout:
+                duration_ms = int((time.time() - t0) * 1000)
+                attempt_errors.append({"attempt": attempt, "error": "timeout", "duration_ms": duration_ms})
+                logger.error(f"Request timeout on attempt {attempt}")
+            except requests.exceptions.RequestException as e:
+                duration_ms = int((time.time() - t0) * 1000)
+                attempt_errors.append({"attempt": attempt, "error": str(e), "duration_ms": duration_ms})
+                logger.error(f"Network error on attempt {attempt}: {e}")
+            except json.JSONDecodeError as e:
+                duration_ms = int((time.time() - t0) * 1000)
+                attempt_errors.append({"attempt": attempt, "error": "invalid_json", "duration_ms": duration_ms})
+                logger.error(f"JSON decode error on attempt {attempt}: {e}")
+            except Exception as e:
+                duration_ms = int((time.time() - t0) * 1000)
+                attempt_errors.append({"attempt": attempt, "error": str(e), "duration_ms": duration_ms})
+                logger.error(f"Search error on attempt {attempt}: {e}")
+
+            # Exponential backoff before next attempt
+            if attempt < max_attempts:
+                sleep_for = base_backoff * (2 ** (attempt - 1))
+                time.sleep(sleep_for)
+
+        # If we get here, all attempts failed
+        results["status"] = "error"
+        results["error"] = "All attempts failed"
+        results["request_metrics"] = {
+            "attempts": max_attempts,
+            "total_duration_ms": int((time.time() - start_time) * 1000),
+            "errors": attempt_errors
+        }
         return results
     
     

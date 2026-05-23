@@ -4,7 +4,8 @@ import pytest
 import asyncio
 
 from app.services.generation_service import (
-    trigger_generation, get_generation_progress, check_generation_complete
+    trigger_generation, get_generation_progress, check_generation_complete,
+    build_agent_request_payload,
 )
 
 
@@ -30,6 +31,14 @@ async def test_trigger_generation_lowercase_uppercase():
     """Test that ticker is normalized to uppercase."""
     result = await trigger_generation("nvda")
     assert result["ticker"] == "NVDA"
+
+
+def test_build_agent_request_payload_sets_todo_status():
+    """Test that new agent requests are queued with to do status."""
+    payload = build_agent_request_payload("NVDA", 60)
+    assert payload["ticker"] == "NVDA"
+    assert payload["status"] == "to do"
+    assert payload["requested_by"] == "web_ui"
 
 
 @pytest.mark.asyncio

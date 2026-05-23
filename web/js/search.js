@@ -8,7 +8,8 @@ const errorText = document.getElementById('errorText');
 
 // Validate ticker format
 function validateTicker(ticker) {
-    const pattern = /^[A-Z0-9.]{1,6}$/;
+    // Allow an optional leading '^' (for indices like ^GSPC), followed by 1-8 chars
+    const pattern = /^\^?[A-Z0-9.]{1,8}$/;
     return pattern.test(ticker.toUpperCase());
 }
 
@@ -76,12 +77,17 @@ async function generateReport(ticker) {
         
         if (response.ok) {
             const result = await response.json();
-            
-            if (result.status === 'started') {
+
+            // Accept several server-side status tokens as start of generation
+            const acceptedStartStatuses = ['started', 'in_progress', 'metrics_generated', 'awaiting_reports'];
+            if (acceptedStartStatuses.includes(result.status)) {
                 showLoading(true, 'Generando reportes...\nEsta operación puede tomar varios minutos.');
-                
-                // Start polling for progress
-                pollGenerationProgress(ticker);
+
+                // Use server-suggested timeout if provided
+                const suggested = result.suggested_timeout_seconds || null;
+
+                // Start polling for progress (pass suggested timeout)
+                pollGenerationProgress(ticker, suggested);
             } else {
                 showLoading(false);
                 showError('Error iniciando la generación');
@@ -98,8 +104,10 @@ async function generateReport(ticker) {
 }
 
 // Poll for generation progress
-async function pollGenerationProgress(ticker) {
-    const maxAttempts = 120; // 2 minutes with 1 second interval
+async function pollGenerationProgress(ticker, suggestedTimeoutSeconds = null) {
+    const intervalMs = 1000;
+    // If server suggests a timeout (seconds), compute max attempts accordingly
+    const maxAttempts = suggestedTimeoutSeconds ? Math.ceil(suggestedTimeoutSeconds * 1000 / intervalMs) : 120;
     let attempts = 0;
     
     const pollInterval = setInterval(async () => {
@@ -173,4 +181,46 @@ tickerInput.addEventListener('keypress', (e) => {
 });
 
 // Focus on input on page load
-tickerInput.focus();
+// Load recent reports and focus input on page load
+async function loadRecentReports() {
+    try {
+        const response = await fetch('/api/reports/');
+        if (!response.ok) return;
+        const list = await response.json();
+        const tbody = document.getElementById('reportsTable');
+        tbody.innerHTML = '';
+
+        if (!list || list.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5">No hay reportes disponibles</td></tr>';
+            return;
+        }
+
+        list.forEach(item => {
+            const tr = document.createElement('tr');
+            const statusBadge = item.exists ? '<span class="badge badge-success">Disponible</span>' : '<span class="badge badge-muted">No disponible</span>';
+            const genDate = item.generated_date || '-';
+            const age = (item.age_days || item.age_days === 0) ? `${item.age_days} días` : '-';
+            const action = item.exists ? `<a href="/report.html?ticker=${encodeURIComponent(item.ticker)}" class="action-link">Ver Informe</a>` : `<a href="#" class="action-link generate-link" data-ticker="${item.ticker}">Generar</a>`;
+            tr.innerHTML = `<td>${item.ticker}</td><td>${statusBadge}</td><td>${genDate}</td><td>${age}</td><td>${action}</td>`;
+            tbody.appendChild(tr);
+
+            if (!item.exists) {
+                const link = tr.querySelector('.generate-link');
+                if (link) {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const t = e.currentTarget.dataset.ticker;
+                        handleReportNotFound(t);
+                    });
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Error loading recent reports:', error);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    tickerInput.focus();
+    loadRecentReports();
+});
